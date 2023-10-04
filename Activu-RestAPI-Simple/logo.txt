@@ -1,2 +1,0 @@
-LOGO = "--[[ #encode "activu-logo.png" ]]"
-LOGO2 = "--[[ #encode "vis-logo.png" ]]"
