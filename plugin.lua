@@ -34,7 +34,7 @@ local Colors = {
 
 -- The name that will initially display when dragged into a design
 function GetPrettyName(props)
-  return "Activu RestAPI, version " .. PluginInfo.BuildVersion-- PluginInfo.Version
+  return "Activu RestAPI, version " .. PluginInfo.Version
 end
 
 -- Optional function used if plugin has multiple pages
@@ -42,13 +42,6 @@ function GetPages(props)
   local pages = {}
   --[[ #include "pages.lua" ]]
   return pages
-end
-
--- Optional function to define model if plugin supports more than one model
-function GetModel(props)
-  local model = {}
-  --[[ #include "model.lua" ]]
- return model
 end
 
 -- Define User configurable Properties of the plugin

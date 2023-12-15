@@ -8,7 +8,6 @@ Controls = Controls
 --********************************************************************************
 EditWebAddr = Controls.WebAddress
 EditAPI = Controls.APIkey
-BtnGetGroups = Controls.GetGroups
 SelectWalls = Controls.AvailableWalls
 BtnGetWalls = Controls.GetWalls
 BtnGetSources = Controls.GetSources
@@ -68,11 +67,6 @@ EditSendStr = Controls.SendString
 --********************************************************************************
 OK = "0"
 DEBUG_WINDOW_SIZE = -1500
-LAYOUT_PREVIEW_BLOCK = {ListLayoutSources,LayoutPreview}
-PREVIEW_BLOCKS = {}
-for k,type in ipairs(SIMPLE_COMMANDS) do
-  table.insert(PREVIEW_BLOCKS, _G['edit'..type..'ID'])
-end
 ALL_SOURCE_LABEL = "ALL"
 MANUAL_SORUCE_ID = "ManualSourceAdd"
 TOTAL_DESTINATIONS = 30
@@ -80,12 +74,16 @@ UNIVERSAL_LABEL = "UNIVERSAL"
 CLEARSOURCESTRING = "Clear Sources"
 SOURCE_DROPDOWN_DEFAULT = "*Click to Change*"
 INSTANCE_STRING = 'Instance_'..math.random(100000, 999999)..'_'
-
+DEFAULT_WEBADDR = "https://<ipaddress>:59081"
 
 STATUS_CODES = {
   {nil,"Fault","Fault"},
-  {0,"Fault","Connection Timeout"},
-  {200,"OK","Success"},
+  {0,"MISSING","Connection Timeout"},
+  {1,"MISSING","Disconnected"},
+  {2,"INITIALIZING",""},
+  {3,"MISSING","Missing IP Address"},
+  {4,"MISSING","Missing API Key"},
+  {200,"OK",""},
   {400,"FAULT","Bad Request"},
   {401,"FAULT","Unauthorized"},
   {406,"FAULT","Not Acceptable"},
@@ -248,25 +246,8 @@ function PopulateData(type,data)
     object.Choices = options
     if object.String == "" then object.String = changeString end
   end
-
-  ButtonFlash(_btnGet)
 end
 
---********************************************************************************
---* Function: ButtonFlash(btn)
---* Description: Flashes the button blue with "UPDATED" text
---********************************************************************************
-function ButtonFlash(btn)
-  local notifyColor = 'blue'
-  local notifyStr = 'UPDATED'
-  local legend = btn.Legend
-  btn.Color = notifyColor
-  btn.Legend = notifyStr
-  Timer.CallAfter(function()
-    btn.Color = '' 
-    btn.Legend = legend
-  end, 0.5)
-end
 
 --********************************************************************************
 --* Function: CheckIfPopulated(object)
@@ -295,22 +276,6 @@ end
 
 
 --********************************************************************************
---* Function: LoadPreviewWindow(i)
---* Description: Loads preview window in layout tab
---********************************************************************************
-function LoadPreviewWindow(i)
-  for key,object in ipairs(LAYOUT_PREVIEW_BLOCK) do
-    object.IsInvisible = i < 1
-  end
-  for key,object in ipairs(PREVIEW_BLOCKS) do
-    for k,o in ipairs(object) do
-      o.IsInvisible = k ~= i
-    end
-  end
-end
-
-
---********************************************************************************
 --* Function: SourceEditSelect(i,tab,tabIndex)
 --* Description: function for when a layout edit button is pressed
 --********************************************************************************
@@ -320,7 +285,6 @@ function EditSelect(type,buttonID)
   for key,object in ipairs(_btnEdit) do
     object.Boolean = key == buttonID
   end
-  LoadPreviewWindow(buttonID)
   GetPreview(type,buttonID)
 end
 
@@ -554,33 +518,6 @@ end
 
 
 --********************************************************************************
---* Function: AddCustomSource(key)
---* Description: add selected source from source tree to specified coordinates
---********************************************************************************
---[[
-function AddCustomSource(key)
-  local sourceID = EditSourceId[key].String
-  local sourceInstanceId = EditSourceInstanceId[key].String
-  local x = EditSourcePlaceCoordsX[key].String
-  local y = EditSourcePlaceCoordsY[key].String
-  local width = EditSourcePlaceCoordsW[key].String
-  local height = EditSourcePlaceCoordsH[key].String
-  --RemoveSource(sourceInstanceId)
-  AddSource(sourceID,sourceInstanceId,x,y,width,height)
-end
-
-
---********************************************************************************
---* Function: RemoveCustomSource()
---* Description: remove custom added source from videowall
---********************************************************************************
-function RemoveCustomSource(key)
-  local sourceInstanceId = EditSourceInstanceId[key].String
-  RemoveSource(sourceInstanceId)
-end
-]]--
-
---********************************************************************************
 --* Function: ClearViewscreen()
 --* Description: clear first viewscreen
 --********************************************************************************
@@ -734,8 +671,6 @@ function GetCommandURL(command,params,params2)
     url = url.."layouts/"..params.."?"
   elseif command == "GetSources" then
     url = url.."sources?"
-  elseif command == "GetGroups" then
-    url = url.."groups?"
   elseif command == "RemoveSource" then
     url = url.."walls/"..EditWallID.String.."/sources/"..params.."?"
   end
@@ -849,9 +784,8 @@ function done(tbl, code, data, e)
   elseif CalledCommand == "GetLayoutInfo" then
     LayoutData = qsc_json.decode(data)
     PopulateLayoutInfo()
-  elseif CalledCommand == "GetSources" then PopulateData('Source',data)--PopulateSources(data)
+  elseif CalledCommand == "GetSources" then PopulateData('Source',data)
   end
-  
   table.insert(LastResponses,1,response)
   if #LastResponses > 15 then
     table.remove(LastResponses)--,#LastResponses)
@@ -875,12 +809,13 @@ function ShowResponse()
   local code = response[2]
   local e = response[3]
   local data = response[4]
+  FormattedData = data:gsub('("[^"]-"):','[%1]=')
   EditResponseBody.String = string.format("Response Code: %i\t\tErrors: %s\rData: %s",code, e or "None", data)
 end
 
 
 --********************************************************************************
---* Function: PopulateDefaults
+--* Function: PopulateDefaults()
 --* Description: runs through a list of potentially undefined controls and populates
 --* them with a default value
 --********************************************************************************
@@ -888,7 +823,23 @@ function PopulateDefaults()
   local function AddStrIfBlank(object,defaultStr)
     if object.String == "" then object.String = defaultStr end
   end
-  AddStrIfBlank(EditWebAddr,"https://<ipaddress>:59081")
+  AddStrIfBlank(EditWebAddr,DEFAULT_WEBADDR)
+end
+
+
+--********************************************************************************
+--* Function: EstablishConnection()
+--* Description: check if web address and API are populated.  If they are
+--* run GetWalls command to test API key
+--********************************************************************************
+function EstablishConnection()
+  if EditAPI.String ~= "" and EditWebAddr.String ~= "" then
+    GET("GetWalls")
+  elseif EditWebAddr.String == "" or EditWebAddr.String == DEFAULT_WEBADDR then
+    ParseCode(3)
+  elseif EditAPI.String == "" then
+    ParseCode(4)
+  end
 end
 
 
@@ -897,27 +848,12 @@ end
 --********************************************************************************
 SelectWalls.EventHandler = UpdateWallInfo
 BtnGetWalls.EventHandler = function() GET("GetWalls") end
---BtnGetSources.EventHandler = function() GET("GetSources") end
---btnGetLayouts.EventHandler = function() GET("GetLayouts") end
---btnGetScripts.EventHandler = function() GET("GetScripts") end
-
-
 BtnClearVS.EventHandler = ClearViewscreen
-
---ListAvailSources.EventHandler = UpdateSourceInfo
---ListSourceFilter.EventHandler = FilterSources
-
-
-
 BtnGetWallsources.EventHandler = UpdateWallInfo
-
 
 for key,object in ipairs(BtnVsSrcSelect) do
   object.EventHandler = function() HideSourceLists(key) end
 end
-
-
-
 
 for k,type in ipairs(SIMPLE_COMMANDS) do
   local types = type..'s'
@@ -948,7 +884,6 @@ for k,type in ipairs(SIMPLE_COMMANDS) do
   for key,object in ipairs(_editDef) do
     object.EventHandler = function() 
       ComboSelect(key,_btnEdit)
-      LoadPreviewWindow(key)
       GetPreview(type,key)
     end
   end
@@ -956,31 +891,28 @@ for k,type in ipairs(SIMPLE_COMMANDS) do
 end
 
 
----- this is part of the layout section of the wall.  edit immediately
 BtnLoadLayout.EventHandler = function(obj)
   local layoutID = GetID(AvailableLayouts,EditLayouts.String)
   POST('loadLayout',layoutID)
 end
 
 EditLastCommands.EventHandler = ShowResponse
+EditWebAddr.EventHandler = EstablishConnection
+EditAPI.EventHandler = EstablishConnection
+
 
 --********************************************************************************
 --* Function: Initialize()
 --* Description: Initialization code for the plugin
 --********************************************************************************
 function Initialize()
-  if EditAPI.String ~= "" and EditWebAddr ~= "" then
-    GET("GetWalls")
-  end
+  ParseCode(2)
   HideSourceLists(1)
-  LoadPreviewWindow(1)
-
   PopulateDefaults()    
   for k,type in ipairs(SIMPLE_COMMANDS) do
     local call = _G['btn'..type..'Call']
     local legend = _G['edit'..type..'Legend']
     local uciEdit = _G['btn'..type..'UCIEdit']
-    ---
     for key,object in ipairs(call) do
       if uciEdit[key].Boolean then
         legend[key].IsDisabled = true  
@@ -988,11 +920,7 @@ function Initialize()
         object.Legend = legend[key].String
       end
     end
-    -----
   end
-  
-
+  EstablishConnection()
 end
 Initialize()
-
-

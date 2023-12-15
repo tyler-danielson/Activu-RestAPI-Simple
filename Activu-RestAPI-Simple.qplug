@@ -6,11 +6,15 @@
 -- Information block for the plugin
 PluginInfo = {
   Name = "Activu~Basic Control",
-  Version = "0.3",
-  BuildVersion = "1.1.0.1758",
+  Version = "1.0",
+  BuildVersion = "1.0.0.1798",
   Id = "Activu RestAPI Simple",
   Author = "Tyler Danielson",
-  Description = "A plugin to interface with Activu RestAPI.  Written by Tyler Danielson for Activu Corp."
+  Description = "A plugin to interface with Activu RestAPI.  Written by Tyler Danielson for Activu Corp.",
+  IsManaged = true,
+  Type = Reflect and Reflect.Types.VideoDistribution or 0,
+  Manufacturer = "Activu",
+  Model = "Vis|ability"
 }
 
 -- Define the color of the plugin object in the design
@@ -36,16 +40,11 @@ local Colors = {
 
 -------********add note for this
 --Pull templates from a separate file
-  --local NumOfCategories = props["Category Count"].Value
-  
-  local pages = {"Layout","Script","Source"}--,"Template"}
+  local pages = {"Layout","Script","Source"}
   
   pageDefs = {}
   
-  --for key,type in ipairs(pages) do
   for i = 1, #pages do
-    --local defs = {}
-    --local defs = type
     local type = pages[i]
     pageDefs[type] = {
       pretty = type,
@@ -59,7 +58,6 @@ local Colors = {
       },
       get = "Get"..type,
       call = type.."_Call",
-      --callX = type.."CallX",
       id = type.."_ID",
       legend = type.."_Legend",
       uciDefined = type.."_uciDefined",
@@ -84,7 +82,7 @@ local Colors = {
 
 -- The name that will initially display when dragged into a design
 function GetPrettyName(props)
-  return "Activu RestAPI, version " .. PluginInfo.BuildVersion-- PluginInfo.Version
+  return "Activu RestAPI, version " .. PluginInfo.Version
 end
 
 -- Optional function used if plugin has multiple pages
@@ -112,34 +110,22 @@ function GetPages(props)
   return pages
 end
 
--- Optional function to define model if plugin supports more than one model
-function GetModel(props)
-  local model = {}
-  if props.Model ~= nil and props.Model.Value ~= "" then
-    table.insert(model, { props.Model.Value } )
-  else
-    table.insert(model, { "Base Model" } )
-  end
- return model
-end
-
 -- Define User configurable Properties of the plugin
 function GetProperties()
   local props = {}
   props={
-    --{Name="Plugin Mode",Type="enum",Choices={"Simple","Touchpanel"},Value="Simple"},
     {Name = "Number of Layouts",Type = "integer",Min = 0,Max = 25,Value = 5},
     {Name = "Number of Scripts",Type = "integer",Min = 0,Max = 25,Value = 5},
     {Name = "Number of Sources",Type = "integer",Min = 0,Max = 25,Value = 5},
-    {Name ="Debug Print",Type = "enum",Choices = {"None", "Tx/Rx", "Tx", "Rx", "Function Calls", "All"},Value = "None"},
+    {Name ="Debug Print",Type = "enum", Choices = {"None", "Tx/Rx", "Tx", "Rx", "Function Calls", "All"},Value = "None"},
   }
   return props
 end
 
 -- Optional function to update available properties when properties are altered by the user
 function RectifyProperties(props)
-  if props.plugin_show_debug.Value == false then 
-    props["Debug Print"].IsHidden = true 
+  if props.plugin_show_debug.Value == false then
+    props["Debug Print"].IsHidden = true
   end
   return props
 end
@@ -153,21 +139,20 @@ function GetControls(props)
     {Name = "WebAddress",ControlType = "Text",UserPin=true,PinStyle="Both"},
     {Name = "APIkey",ControlType = "Text",UserPin=true,PinStyle="Both"},
     {Name= "GetWalls", ControlType="Button",ButtonType="Trigger",Count=1,UserPin=true,PinStyle="Both"},
-    {Name= "GetGroups",ControlType="Button",ButtonType="Trigger",UserPin=true,PinStyle="Both"},
     {Name= "LayoutSourceListTemp", ControlType="Text",TextBoxType="ComboBox",Count=1,UserPin=true,PinStyle="Both"},
     {Name= "AvailableWalls",ControlType="Text",TextBoxType="ComboBox",Count=1,UserPin=true,PinStyle="Both"},
-    {Name= "WallName",ControlType = "Text"},
-    {Name= "WallID",ControlType = "Text"},
-    {Name= "Wall_X",ControlType="Knob",ControlUnit="Integer",Min=0,Max=23040},
-    {Name= "Wall_Y",ControlType="Knob",ControlUnit="Integer",Min=0,Max=6480},
-    {Name= "Wall_Width",ControlType="Knob",ControlUnit="Integer",Min=1,Max=23040},
-    {Name= "Wall_Height",ControlType="Knob",ControlUnit="Integer",Min=1,Max=6480},
+    {Name= "WallName",ControlType = "Text",UserPin=true,PinStyle="Both"},
+    {Name= "WallID",ControlType = "Text",UserPin=true,PinStyle="Both"},
+    {Name= "Wall_X",ControlType="Knob",ControlUnit="Integer",Min=0,Max=23040,UserPin=true,PinStyle="Output"},
+    {Name= "Wall_Y",ControlType="Knob",ControlUnit="Integer",Min=0,Max=6480,UserPin=true,PinStyle="Output"},
+    {Name= "Wall_Width",ControlType="Knob",ControlUnit="Integer",Min=1,Max=23040,UserPin=true,PinStyle="Output"},
+    {Name= "Wall_Height",ControlType="Knob",ControlUnit="Integer",Min=1,Max=6480,UserPin=true,PinStyle="Output"},
     {Name= "Wall_VS",ControlType="Text",TextBoxType="ComboBox",Count=1,UserPin=true,PinStyle="Both"},
     {Name= "Wall_Layouts",ControlType="Text",TextBoxType="ComboBox",Count=1,UserPin=true,PinStyle="Both"},
     {Name= "Wall_Templates",ControlType="Text",TextBoxType="ComboBox",UserPin=true,PinStyle="Both"},
     {Name= "LoadedSources",ControlType="Text",TextBoxType="ComboBox",Count=5,UserPin=true,PinStyle="Output"},
-    {Name= "VS_SourceView_Select",ControlType="Button",ButtonType="Toggle",Count=5,UserPin=true,PinStyle="Output"},
-    {Name= "ClearVS",ControlType="Button",ButtonType="Trigger",UserPin=true,PinStyle="both"},
+    {Name= "VS_SourceView_Select",ControlType="Button",ButtonType="Toggle",Count=5,UserPin=true,PinStyle="Both"},
+    {Name= "ClearVS",ControlType="Button",ButtonType="Trigger",UserPin=true,PinStyle="Both"},
     {Name= "LoadLayout", ControlType="Button",ButtonType="Trigger",Count=1,UserPin=true,PinStyle="Both"},
     {Name="GetWallSources",ControlType="Button",ButtonType="Trigger",UserPin=true,PinStyle="Both"},
     {Name ="btnClear",ControlType="Button",ButtonType="Trigger",UserPin=true,PinStyle="Both"},
@@ -180,18 +165,18 @@ function GetControls(props)
   
   for k,type in ipairs(SIMPLE_COMMANDS) do
     local qty = props["Number of "..type.."s"].Value
-    table.insert(controls,{Name= pageDefs[type].edit, ControlType="Button",ButtonType="Toggle",Count=qty})
-    table.insert(controls,{Name= pageDefs[type].legend, ControlType="Text",Count=qty})
-    table.insert(controls,{Name= pageDefs[type].uciDefined, ControlType="Button",ButtonType="Toggle",Count=qty})
+    table.insert(controls,{Name= pageDefs[type].edit, ControlType="Button",ButtonType="Toggle",Count=qty,UserPin=true,PinStyle="Both"})
+    table.insert(controls,{Name= pageDefs[type].legend, ControlType="Text",Count=qty,UserPin=true,PinStyle="Both"})
+    table.insert(controls,{Name= pageDefs[type].uciDefined, ControlType="Button",ButtonType="Toggle",Count=qty,UserPin=true,PinStyle="Both"})
     table.insert(controls,{Name= pageDefs[type].call, ControlType="Button",ButtonType="Trigger",Count=qty,UserPin=true,PinStyle="Both"})
     table.insert(controls,{Name= pageDefs[type].remove, ControlType="Button",ButtonType="Trigger",Count=qty,UserPin=true,PinStyle="Both"})
-    table.insert(controls,{Name= pageDefs[type].region.x, ControlType="Knob",ControlUnit="Integer",Min=0,Max=23040,Count=qty})
-    table.insert(controls,{Name= pageDefs[type].region.y, ControlType="Knob",ControlUnit="Integer",Min=0,Max=6480,Count=qty})
-    table.insert(controls,{Name= pageDefs[type].region.width,ControlType="Knob",ControlUnit="Integer",Min=0,Max=23040,Count=qty})
-    table.insert(controls,{Name= pageDefs[type].region.height, ControlType="Knob",ControlUnit="Integer",Min=0,Max=6480,Count=qty})
+    table.insert(controls,{Name= pageDefs[type].region.x, ControlType="Knob",ControlUnit="Integer",Min=0,Max=23040,Count=qty,UserPin=true,PinStyle="Both"})
+    table.insert(controls,{Name= pageDefs[type].region.y, ControlType="Knob",ControlUnit="Integer",Min=0,Max=6480,Count=qty,UserPin=true,PinStyle="Both"})
+    table.insert(controls,{Name= pageDefs[type].region.width,ControlType="Knob",ControlUnit="Integer",Min=0,Max=23040,Count=qty,UserPin=true,PinStyle="Both"})
+    table.insert(controls,{Name= pageDefs[type].region.height, ControlType="Knob",ControlUnit="Integer",Min=0,Max=6480,Count=qty,UserPin=true,PinStyle="Both"})
     table.insert(controls,{Name= pageDefs[type].callDef, ControlType="Text",TextBoxType="ComboBox",Count=qty,UserPin=true,PinStyle="Both"})
-    table.insert(controls,{Name= pageDefs[type].id, ControlType="Text",Count=qty,UserPin=true,PinStyle="Output"})
-    table.insert(controls,{Name= pageDefs[type].preview.name,ControlType="Button",ButtonType="Toggle",Count=1,UserPin=false})
+    table.insert(controls,{Name= pageDefs[type].id, ControlType="Text",Count=qty,UserPin=true,PinStyle="Both"})
+    table.insert(controls,{Name= pageDefs[type].preview.name,ControlType="Button",ButtonType="Toggle",Count=1,UserPin=true,PinStyle="Both"})
     table.insert(controls,{Name= pageDefs[type].get, ControlType="Button",ButtonType="Trigger",Count=1,UserPin=true,PinStyle="Both"})
     table.insert(controls,{Name= pageDefs[type].triggerAll, ControlType="Button",ButtonType="Trigger",Count=1,UserPin=true,PinStyle="Output"})
   end
@@ -350,7 +335,7 @@ function GetControlLayout(props)
     
     for i = 1,numOfButtons do
       layout[defs.id.." "..i] = {
-        PrettyName = prettyPlural.."~"..pretty.." ID~"..pretty.." "..i,
+        PrettyName = prettyPlural.."~Definition~"..pretty.." "..i.."~ID",
         Style = "Text",
         Position = {DEFAULT_INPUT_X, TempY},
         Size = CustomSize(45,100)
@@ -358,6 +343,7 @@ function GetControlLayout(props)
     end
     if defs.preview.type == "image" then
       layout[defs.preview.name] = {
+        PrettyName = prettyPlural.."~Preview",
         Style = "Button",
         ButtonStyle = "Trigger",
         Legend= "",
@@ -377,6 +363,7 @@ function GetControlLayout(props)
       LineBreak()
       layout["LayoutSourceListTemp"] = {
         Style="ComboBox",
+        PrettyName = prettyPlural.."~Definition~Layout Sources",
         Position = {CustomPosX(0), TempY},
         Size = CustomSize(45,100),
       }
@@ -394,14 +381,14 @@ function GetControlLayout(props)
       Size = CustomSize(40),
     }
     layout[defs.triggerAll] = {
-      PrettyName = prettyPlural.."~"..pretty.." Trigger",
+      PrettyName = prettyPlural.."~Any "..pretty.." Trigger",
       Style = "LED",
-      Position = {CustomPosX(80), TempY},
-      Size = CustomSize(5),
+      Position = {CustomPosX(88), TempY},
+      Size = CustomSize(12),
     }
     LineBreak()
     AddSubheading("🔍",0,5)
-    AddSubheading(string.upper(pageType).." DEFINTION",5,40)
+    AddSubheading(string.upper(pageType).." DEFINITION",5,40)
     if pageType == "Source" then
       AddSubheading("X",47,7)
       AddSubheading("Y",54,7)
@@ -419,6 +406,7 @@ function GetControlLayout(props)
     for i = 1, numOfButtons do
       --local Y_Pos = TempY+25*(i-1)
       layout[defs.edit.." "..i] = {
+        PrettyName = prettyPlural.."~Edit "..pretty.." Select~"..pretty.." "..i,
         Style = "Button",
         ButtonStyle = "Toggle",
         StrokeColor = Colors.Yellow,
@@ -428,7 +416,7 @@ function GetControlLayout(props)
         Size = CustomSize(5)
       }
       layout[defs.callDef.." "..i] = {
-        PrettyName = prettyPlural.."~"..pretty.." Name~"..pretty.." "..i,
+        PrettyName = prettyPlural.."~Definition~"..pretty.." "..i.."~Name",
         Style = "ComboBox",
         StrokeColor = Colors.Yellow,
         Position = {CustomPosX(5), TempY},
@@ -439,30 +427,30 @@ function GetControlLayout(props)
         layout[defs.region.x.." "..i] = {
           Position = {CustomPosX(47), TempY},
           Size = CustomSize(7,100),
-          PrettyName = "Sources~Source "..i.."~X",
+          PrettyName = "Sources~Definition~Source "..i.."~X",
           Style="Text"
         }
         layout[defs.region.y.." "..i] = {
           Position = {CustomPosX(54), TempY},
           Size = CustomSize(7,100),
-          PrettyName = "Sources~Source "..i.."~Y",
+          PrettyName = "Sources~Definition~Source "..i.."~Y",
           Style="Text"
         }
         layout[defs.region.width.." "..i] = {
           Position = {CustomPosX(61), TempY},
           Size = CustomSize(7,100),
-          PrettyName = "Sources~Source "..i.."~Width",
+          PrettyName = "Sources~Definition~Source "..i.."~Width",
           Style="Text"
         }
         layout[defs.region.height.." "..i] = {
           Position = {CustomPosX(68), TempY},
           Size = CustomSize(7,100),
-          PrettyName = "Sources~Source "..i.."~Height",
+          PrettyName = "Sources~Definition~Source "..i.."~Height",
           Style="Text"
         }
         -----
         layout[defs.call.." "..i] = {
-          PrettyName = prettyPlural.."~Load "..pretty.."~"..pretty.." "..i,
+          PrettyName = prettyPlural.."~Load "..pretty.." Trigger~"..pretty.." "..i,
           Style = "Button",
           ButtonStyle = "Trigger",
           ButtonVisualStyle = "Gloss",
@@ -471,7 +459,7 @@ function GetControlLayout(props)
           Size = CustomSize(12)
         }
         layout[defs.remove.." "..i] = {
-          PrettyName = prettyPlural.."~Remove "..pretty.."~"..pretty.." "..i,
+          PrettyName = prettyPlural.."~Remove "..pretty.." Trigger~"..pretty.." "..i,
           Style = "Button",
           ButtonStyle = "Trigger",
           ButtonVisualStyle = "Gloss",
@@ -481,7 +469,7 @@ function GetControlLayout(props)
         }
       else
         layout[defs.uciDefined.." "..i] = {
-          PrettyName = prettyPlural.."~"..pretty.." Legend~UCI Defined ".." "..i,
+          PrettyName = prettyPlural.."~Definition~"..pretty.." "..i.."~UCI Defined",
           Style = "Button",
           ButtonStyle = "Toggle",
           StrokeColor = Colors.Yellow,
@@ -489,7 +477,7 @@ function GetControlLayout(props)
           Size = CustomSize(5,100)
         }
         layout[defs.legend.." "..i] = {
-          PrettyName = prettyPlural.."~"..pretty.." Legend~"..pretty.." "..i,
+          PrettyName = prettyPlural.."~Definition~"..pretty.." "..i.."~Legend",
           Style = "Text",
           StrokeColor = Colors.Yellow,
           Position = {CustomPosX(55), TempY},
@@ -583,9 +571,6 @@ function GetControlLayout(props)
       Size = DEFAULT_INPUT_SIZE,
       FontSize = INPUT_SIZE,
     })
-    layout['GetGroups'] = {
-      PrettyName="Get Groups", Style = "Button",Position = {CustomPosX(80),TempY},Size = CustomSize(20,100),Legend="Test"
-    }
     LineBreak()
     layout["WebAddress"] = {
       PrettyName = "ASM Web Address",
@@ -644,9 +629,9 @@ function GetControlLayout(props)
   elseif CurrentPage == "Wall Config" then
     AddLogo()
     AddSubheading("Discovered Walls",0,100)
-    layout["GetWalls"] = {PrettyName = "Wall Defnitions~Get Walls",Style="Button",ButtonStyle = "Trigger",Legend = "REFRESH",Position = {CustomPosX(80), TempY},Size = CustomSize(20),}
+    layout["GetWalls"] = {PrettyName = "Wall Config~Get Walls",Style="Button",ButtonStyle = "Trigger",Legend = "REFRESH",Position = {CustomPosX(80), TempY},Size = CustomSize(20),}
     LineBreak(1.2)
-    layout["AvailableWalls"] = {PrettyName = "Wall Defnitions~Available Walls",Style="ComboBox",StrokeColor = Colors.Yellow,Position = {DEFAULT_INPUT_X, TempY},Size = DEFAULT_INPUT_SIZE,}
+    layout["AvailableWalls"] = {PrettyName = "Wall Config~Available Walls",Style="ComboBox",StrokeColor = Colors.Yellow,Position = {DEFAULT_INPUT_X, TempY},Size = DEFAULT_INPUT_SIZE,}
     ---
     LineBreak(2)
     AddHeader("WALL DEFINITION")
@@ -654,13 +639,13 @@ function GetControlLayout(props)
     AddSubheading("WALL NAME",55,45)
     LineBreak()
     layout["WallID"] = {
-      PrettyName = "Wall Config~Wall ID",
+      PrettyName = "Wall Config~Definition~Wall ID",
       Style="Text",
       Position = {DEFAULT_INPUT_X, TempY},
       Size = CustomSize(45,100),
     }
     layout["WallName"] = {
-      PrettyName = "Wall Config~Wall Name",
+      PrettyName = "Wall Config~Definition~Wall Name",
       Style="Text",
       Position = {CustomPosX(55), TempY},
       Size = CustomSize(45,100),
@@ -671,14 +656,14 @@ function GetControlLayout(props)
     AddSubheading("width",55,20)
     AddSubheading("height",80,20)
     LineBreak()
-    layout["Wall_X"] = {PrettyName = "Wall Config~Wall X",Style="Text",Position = {DEFAULT_INPUT_X, TempY},Size = CustomSize(20,100),}
-    layout["Wall_Y"] = {PrettyName = "Wall Config~Wall Y",Style="Text",Position = {CustomPosX(25), TempY},Size = CustomSize(20,100),}
-    layout["Wall_Width"] = {PrettyName = "Wall Config~Wall Width",Style="Text",Position = {CustomPosX(55), TempY},Size = CustomSize(20,100),}
-    layout["Wall_Height"] = {PrettyName = "Wall Config~Wall Height",Style="Text",Position = {CustomPosX(80), TempY},Size = CustomSize(20,100),}
+    layout["Wall_X"] = {PrettyName = "Wall Config~Definition~Wall X",Style="Text",Position = {DEFAULT_INPUT_X, TempY},Size = CustomSize(20,100),}
+    layout["Wall_Y"] = {PrettyName = "Wall Config~Definition~Wall Y",Style="Text",Position = {CustomPosX(25), TempY},Size = CustomSize(20,100),}
+    layout["Wall_Width"] = {PrettyName = "Wall Config~Definition~Wall Width",Style="Text",Position = {CustomPosX(55), TempY},Size = CustomSize(20,100),}
+    layout["Wall_Height"] = {PrettyName = "Wall Config~Definition~Wall Height",Style="Text",Position = {CustomPosX(80), TempY},Size = CustomSize(20,100),}
     LineBreak(2)
     AddSubheading("Select Default ViewScreen:",0,50)
     layout["Wall_VS"] = {
-      PrettyName = "Wall Config~ViewScreen",
+      PrettyName = "Wall Config~Definition~Default ViewScreen",
       Style="ComboBox",
       StrokeColor = Colors.Yellow,
       CornerRadius = 5,
@@ -687,6 +672,7 @@ function GetControlLayout(props)
     }
     layout["ClearVS"] = {
       Style="Button",
+      PrettyName = "Wall Config~Clear ViewScreen",
       ButtonStyle = "Trigger",
       CornerRadius = 5,
       StrokeColor = Colors.Red,
@@ -699,20 +685,20 @@ function GetControlLayout(props)
     AddSubheading("Wall Layouts",0,45)
     AddSubheading("Wall Templates",55,45)
     LineBreak()
-    layout["Wall_Layouts"] = {PrettyName = "Wall Config~Layouts",Style="ListBox",Position = {DEFAULT_INPUT_X, TempY},Size = CustomSize(45,500),}
+    layout["Wall_Layouts"] = {PrettyName = "Wall Config~Available Layouts",Style="ListBox",Position = {DEFAULT_INPUT_X, TempY},Size = CustomSize(45,500),}
     layout["Wall_Templates"] = {
-      PrettyName = "Wall Config~Templates",
+      PrettyName = "Wall Config~Available Templates",
       Style="ListBox",
       Position = {CustomPosX(55), TempY},
       Size = CustomSize(45,500),
     }
     LineBreak(5)
-    layout["LoadLayout"] = {PrettyName = "Layouts~Load Selected Layout",Style="Button",ButtonStyle = "Trigger",Legend = "LOAD SELECTED LAYOUT",Position = {DEFAULT_INPUT_X, TempY},Size = CustomSize(45,100),}
+    layout["LoadLayout"] = {PrettyName = "Wall Config~Load Selected Layout",Style="Button",ButtonStyle = "Trigger",Legend = "LOAD SELECTED LAYOUT",Position = {DEFAULT_INPUT_X, TempY},Size = CustomSize(45,100),}
     LineBreak()
     AddHeader("CURRENT CONTENT")
     for i = 1,5 do
       layout["VS_SourceView_Select "..i] = {
-        PrettyName = "Wall Config~VS Select~VS "..i,
+        PrettyName = "Wall Config~ViewScreen Select~VS "..i,
         Style="Button",
         ButtonStyle = "Toggle",
         CornerRadius = 5,
@@ -720,20 +706,11 @@ function GetControlLayout(props)
         Size = CustomSize(10,100),
       }
     end
-    for i = 1,5 do
-      layout["VS_SourceView_Select "..i] = {
-        Style="Button",
-        ButtonStyle = "Toggle",
-        CornerRadius = 5,
-        Position = {CustomPosX((i-1)*10), TempY},
-        Size = CustomSize(10,100),
-      }
-    end
-    layout['GetWallSources'] = {PrettyName = "Wall Config~Get Sources",Style="Button",ButtonStyle="Trigger",Legend = "Refresh",Position = {CustomPosX(80), TempY},Size = CustomSize(20),}
+    layout['GetWallSources'] = {PrettyName = "Wall Config~Get Wall Content",Style="Button",ButtonStyle="Trigger",Legend = "Refresh",Position = {CustomPosX(80), TempY},Size = CustomSize(20),}
     LineBreak()
     for i = 1,5 do
       layout["LoadedSources "..i] = {
-        PrettyName = "Wall Config~Loaded Sources "..i,
+        PrettyName = "Wall Config~Loaded Sources~ViewScreen "..i,
         Style="ListBox",
         Position = {DEFAULT_INPUT_X, TempY},
         Size = CustomSize(100,600),
@@ -763,7 +740,6 @@ if Controls then
   --********************************************************************************
   EditWebAddr = Controls.WebAddress
   EditAPI = Controls.APIkey
-  BtnGetGroups = Controls.GetGroups
   SelectWalls = Controls.AvailableWalls
   BtnGetWalls = Controls.GetWalls
   BtnGetSources = Controls.GetSources
@@ -823,11 +799,6 @@ if Controls then
   --********************************************************************************
   OK = "0"
   DEBUG_WINDOW_SIZE = -1500
-  LAYOUT_PREVIEW_BLOCK = {ListLayoutSources,LayoutPreview}
-  PREVIEW_BLOCKS = {}
-  for k,type in ipairs(SIMPLE_COMMANDS) do
-    table.insert(PREVIEW_BLOCKS, _G['edit'..type..'ID'])
-  end
   ALL_SOURCE_LABEL = "ALL"
   MANUAL_SORUCE_ID = "ManualSourceAdd"
   TOTAL_DESTINATIONS = 30
@@ -835,12 +806,16 @@ if Controls then
   CLEARSOURCESTRING = "Clear Sources"
   SOURCE_DROPDOWN_DEFAULT = "*Click to Change*"
   INSTANCE_STRING = 'Instance_'..math.random(100000, 999999)..'_'
-  
+  DEFAULT_WEBADDR = "https://<ipaddress>:59081"
   
   STATUS_CODES = {
     {nil,"Fault","Fault"},
-    {0,"Fault","Connection Timeout"},
-    {200,"OK","Success"},
+    {0,"MISSING","Connection Timeout"},
+    {1,"MISSING","Disconnected"},
+    {2,"INITIALIZING",""},
+    {3,"MISSING","Missing IP Address"},
+    {4,"MISSING","Missing API Key"},
+    {200,"OK",""},
     {400,"FAULT","Bad Request"},
     {401,"FAULT","Unauthorized"},
     {406,"FAULT","Not Acceptable"},
@@ -1003,25 +978,8 @@ if Controls then
       object.Choices = options
       if object.String == "" then object.String = changeString end
     end
-  
-    ButtonFlash(_btnGet)
   end
   
-  --********************************************************************************
-  --* Function: ButtonFlash(btn)
-  --* Description: Flashes the button blue with "UPDATED" text
-  --********************************************************************************
-  function ButtonFlash(btn)
-    local notifyColor = 'blue'
-    local notifyStr = 'UPDATED'
-    local legend = btn.Legend
-    btn.Color = notifyColor
-    btn.Legend = notifyStr
-    Timer.CallAfter(function()
-      btn.Color = '' 
-      btn.Legend = legend
-    end, 0.5)
-  end
   
   --********************************************************************************
   --* Function: CheckIfPopulated(object)
@@ -1050,22 +1008,6 @@ if Controls then
   
   
   --********************************************************************************
-  --* Function: LoadPreviewWindow(i)
-  --* Description: Loads preview window in layout tab
-  --********************************************************************************
-  function LoadPreviewWindow(i)
-    for key,object in ipairs(LAYOUT_PREVIEW_BLOCK) do
-      object.IsInvisible = i < 1
-    end
-    for key,object in ipairs(PREVIEW_BLOCKS) do
-      for k,o in ipairs(object) do
-        o.IsInvisible = k ~= i
-      end
-    end
-  end
-  
-  
-  --********************************************************************************
   --* Function: SourceEditSelect(i,tab,tabIndex)
   --* Description: function for when a layout edit button is pressed
   --********************************************************************************
@@ -1075,7 +1017,6 @@ if Controls then
     for key,object in ipairs(_btnEdit) do
       object.Boolean = key == buttonID
     end
-    LoadPreviewWindow(buttonID)
     GetPreview(type,buttonID)
   end
   
@@ -1309,33 +1250,6 @@ if Controls then
   
   
   --********************************************************************************
-  --* Function: AddCustomSource(key)
-  --* Description: add selected source from source tree to specified coordinates
-  --********************************************************************************
-  --[[
-  function AddCustomSource(key)
-    local sourceID = EditSourceId[key].String
-    local sourceInstanceId = EditSourceInstanceId[key].String
-    local x = EditSourcePlaceCoordsX[key].String
-    local y = EditSourcePlaceCoordsY[key].String
-    local width = EditSourcePlaceCoordsW[key].String
-    local height = EditSourcePlaceCoordsH[key].String
-    --RemoveSource(sourceInstanceId)
-    AddSource(sourceID,sourceInstanceId,x,y,width,height)
-  end
-  
-  
-  --********************************************************************************
-  --* Function: RemoveCustomSource()
-  --* Description: remove custom added source from videowall
-  --********************************************************************************
-  function RemoveCustomSource(key)
-    local sourceInstanceId = EditSourceInstanceId[key].String
-    RemoveSource(sourceInstanceId)
-  end
-  ]]--
-  
-  --********************************************************************************
   --* Function: ClearViewscreen()
   --* Description: clear first viewscreen
   --********************************************************************************
@@ -1489,8 +1403,6 @@ if Controls then
       url = url.."layouts/"..params.."?"
     elseif command == "GetSources" then
       url = url.."sources?"
-    elseif command == "GetGroups" then
-      url = url.."groups?"
     elseif command == "RemoveSource" then
       url = url.."walls/"..EditWallID.String.."/sources/"..params.."?"
     end
@@ -1604,9 +1516,8 @@ if Controls then
     elseif CalledCommand == "GetLayoutInfo" then
       LayoutData = qsc_json.decode(data)
       PopulateLayoutInfo()
-    elseif CalledCommand == "GetSources" then PopulateData('Source',data)--PopulateSources(data)
+    elseif CalledCommand == "GetSources" then PopulateData('Source',data)
     end
-    
     table.insert(LastResponses,1,response)
     if #LastResponses > 15 then
       table.remove(LastResponses)--,#LastResponses)
@@ -1630,12 +1541,13 @@ if Controls then
     local code = response[2]
     local e = response[3]
     local data = response[4]
+    FormattedData = data:gsub('("[^"]-"):','[%1]=')
     EditResponseBody.String = string.format("Response Code: %i\t\tErrors: %s\rData: %s",code, e or "None", data)
   end
   
   
   --********************************************************************************
-  --* Function: PopulateDefaults
+  --* Function: PopulateDefaults()
   --* Description: runs through a list of potentially undefined controls and populates
   --* them with a default value
   --********************************************************************************
@@ -1643,7 +1555,23 @@ if Controls then
     local function AddStrIfBlank(object,defaultStr)
       if object.String == "" then object.String = defaultStr end
     end
-    AddStrIfBlank(EditWebAddr,"https://<ipaddress>:59081")
+    AddStrIfBlank(EditWebAddr,DEFAULT_WEBADDR)
+  end
+  
+  
+  --********************************************************************************
+  --* Function: EstablishConnection()
+  --* Description: check if web address and API are populated.  If they are
+  --* run GetWalls command to test API key
+  --********************************************************************************
+  function EstablishConnection()
+    if EditAPI.String ~= "" and EditWebAddr.String ~= "" then
+      GET("GetWalls")
+    elseif EditWebAddr.String == "" or EditWebAddr.String == DEFAULT_WEBADDR then
+      ParseCode(3)
+    elseif EditAPI.String == "" then
+      ParseCode(4)
+    end
   end
   
   
@@ -1652,27 +1580,12 @@ if Controls then
   --********************************************************************************
   SelectWalls.EventHandler = UpdateWallInfo
   BtnGetWalls.EventHandler = function() GET("GetWalls") end
-  --BtnGetSources.EventHandler = function() GET("GetSources") end
-  --btnGetLayouts.EventHandler = function() GET("GetLayouts") end
-  --btnGetScripts.EventHandler = function() GET("GetScripts") end
-  
-  
   BtnClearVS.EventHandler = ClearViewscreen
-  
-  --ListAvailSources.EventHandler = UpdateSourceInfo
-  --ListSourceFilter.EventHandler = FilterSources
-  
-  
-  
   BtnGetWallsources.EventHandler = UpdateWallInfo
-  
   
   for key,object in ipairs(BtnVsSrcSelect) do
     object.EventHandler = function() HideSourceLists(key) end
   end
-  
-  
-  
   
   for k,type in ipairs(SIMPLE_COMMANDS) do
     local types = type..'s'
@@ -1703,48 +1616,35 @@ if Controls then
     for key,object in ipairs(_editDef) do
       object.EventHandler = function() 
         ComboSelect(key,_btnEdit)
-        LoadPreviewWindow(key)
         GetPreview(type,key)
       end
     end
     _btnGet.EventHandler = function() GET("Get"..types) end
   end
   
-  --[[
-  for key,object in ipairs(BtnAddSource) do
-    object.EventHandler = function() AddCustomSource(key) end
-  end
   
-  for key,object in ipairs(BtnRemoveSource) do
-    object.EventHandler = function() RemoveCustomSource(key) end
-  end
-  ]]--
-  
-  ---- this is part of the layout section of the wall.  edit immediately
   BtnLoadLayout.EventHandler = function(obj)
     local layoutID = GetID(AvailableLayouts,EditLayouts.String)
     POST('loadLayout',layoutID)
   end
   
   EditLastCommands.EventHandler = ShowResponse
+  EditWebAddr.EventHandler = EstablishConnection
+  EditAPI.EventHandler = EstablishConnection
+  
   
   --********************************************************************************
   --* Function: Initialize()
   --* Description: Initialization code for the plugin
   --********************************************************************************
   function Initialize()
-    if EditAPI.String ~= "" and EditWebAddr ~= "" then
-      GET("GetWalls")
-    end
+    ParseCode(2)
     HideSourceLists(1)
-    LoadPreviewWindow(1)
-  
     PopulateDefaults()    
     for k,type in ipairs(SIMPLE_COMMANDS) do
       local call = _G['btn'..type..'Call']
       local legend = _G['edit'..type..'Legend']
       local uciEdit = _G['btn'..type..'UCIEdit']
-      ---
       for key,object in ipairs(call) do
         if uciEdit[key].Boolean then
           legend[key].IsDisabled = true  
@@ -1752,13 +1652,9 @@ if Controls then
           object.Legend = legend[key].String
         end
       end
-      -----
     end
-    
-  
+    EstablishConnection()
   end
   Initialize()
-  
-  
 end
 

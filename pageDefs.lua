@@ -1,13 +1,8 @@
---local NumOfCategories = props["Category Count"].Value
-
-local pages = {"Layout","Script","Source"}--,"Template"}
+local pages = {"Layout","Script","Source"}
 
 pageDefs = {}
 
---for key,type in ipairs(pages) do
 for i = 1, #pages do
-  --local defs = {}
-  --local defs = type
   local type = pages[i]
   pageDefs[type] = {
     pretty = type,
@@ -21,7 +16,6 @@ for i = 1, #pages do
     },
     get = "Get"..type,
     call = type.."_Call",
-    --callX = type.."CallX",
     id = type.."_ID",
     legend = type.."_Legend",
     uciDefined = type.."_uciDefined",

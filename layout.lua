@@ -146,7 +146,7 @@ function BuildEditPage(pageType)
   
   for i = 1,numOfButtons do
     layout[defs.id.." "..i] = {
-      PrettyName = prettyPlural.."~"..pretty.." ID~"..pretty.." "..i,
+      PrettyName = prettyPlural.."~Definition~"..pretty.." "..i.."~ID",
       Style = "Text",
       Position = {DEFAULT_INPUT_X, TempY},
       Size = CustomSize(45,100)
@@ -154,6 +154,7 @@ function BuildEditPage(pageType)
   end
   if defs.preview.type == "image" then
     layout[defs.preview.name] = {
+      PrettyName = prettyPlural.."~Preview",
       Style = "Button",
       ButtonStyle = "Trigger",
       Legend= "",
@@ -173,6 +174,7 @@ function BuildEditPage(pageType)
     LineBreak()
     layout["LayoutSourceListTemp"] = {
       Style="ComboBox",
+      PrettyName = prettyPlural.."~Definition~Layout Sources",
       Position = {CustomPosX(0), TempY},
       Size = CustomSize(45,100),
     }
@@ -190,14 +192,14 @@ function BuildEditPage(pageType)
     Size = CustomSize(40),
   }
   layout[defs.triggerAll] = {
-    PrettyName = prettyPlural.."~"..pretty.." Trigger",
+    PrettyName = prettyPlural.."~Any "..pretty.." Trigger",
     Style = "LED",
-    Position = {CustomPosX(80), TempY},
-    Size = CustomSize(5),
+    Position = {CustomPosX(88), TempY},
+    Size = CustomSize(12),
   }
   LineBreak()
   AddSubheading("🔍",0,5)
-  AddSubheading(string.upper(pageType).." DEFINTION",5,40)
+  AddSubheading(string.upper(pageType).." DEFINITION",5,40)
   if pageType == "Source" then
     AddSubheading("X",47,7)
     AddSubheading("Y",54,7)
@@ -215,6 +217,7 @@ function BuildEditPage(pageType)
   for i = 1, numOfButtons do
     --local Y_Pos = TempY+25*(i-1)
     layout[defs.edit.." "..i] = {
+      PrettyName = prettyPlural.."~Edit "..pretty.." Select~"..pretty.." "..i,
       Style = "Button",
       ButtonStyle = "Toggle",
       StrokeColor = Colors.Yellow,
@@ -224,7 +227,7 @@ function BuildEditPage(pageType)
       Size = CustomSize(5)
     }
     layout[defs.callDef.." "..i] = {
-      PrettyName = prettyPlural.."~"..pretty.." Name~"..pretty.." "..i,
+      PrettyName = prettyPlural.."~Definition~"..pretty.." "..i.."~Name",
       Style = "ComboBox",
       StrokeColor = Colors.Yellow,
       Position = {CustomPosX(5), TempY},
@@ -235,30 +238,30 @@ function BuildEditPage(pageType)
       layout[defs.region.x.." "..i] = {
         Position = {CustomPosX(47), TempY},
         Size = CustomSize(7,100),
-        PrettyName = "Sources~Source "..i.."~X",
+        PrettyName = "Sources~Definition~Source "..i.."~X",
         Style="Text"
       }
       layout[defs.region.y.." "..i] = {
         Position = {CustomPosX(54), TempY},
         Size = CustomSize(7,100),
-        PrettyName = "Sources~Source "..i.."~Y",
+        PrettyName = "Sources~Definition~Source "..i.."~Y",
         Style="Text"
       }
       layout[defs.region.width.." "..i] = {
         Position = {CustomPosX(61), TempY},
         Size = CustomSize(7,100),
-        PrettyName = "Sources~Source "..i.."~Width",
+        PrettyName = "Sources~Definition~Source "..i.."~Width",
         Style="Text"
       }
       layout[defs.region.height.." "..i] = {
         Position = {CustomPosX(68), TempY},
         Size = CustomSize(7,100),
-        PrettyName = "Sources~Source "..i.."~Height",
+        PrettyName = "Sources~Definition~Source "..i.."~Height",
         Style="Text"
       }
       -----
       layout[defs.call.." "..i] = {
-        PrettyName = prettyPlural.."~Load "..pretty.."~"..pretty.." "..i,
+        PrettyName = prettyPlural.."~Load "..pretty.." Trigger~"..pretty.." "..i,
         Style = "Button",
         ButtonStyle = "Trigger",
         ButtonVisualStyle = "Gloss",
@@ -267,7 +270,7 @@ function BuildEditPage(pageType)
         Size = CustomSize(12)
       }
       layout[defs.remove.." "..i] = {
-        PrettyName = prettyPlural.."~Remove "..pretty.."~"..pretty.." "..i,
+        PrettyName = prettyPlural.."~Remove "..pretty.." Trigger~"..pretty.." "..i,
         Style = "Button",
         ButtonStyle = "Trigger",
         ButtonVisualStyle = "Gloss",
@@ -277,7 +280,7 @@ function BuildEditPage(pageType)
       }
     else
       layout[defs.uciDefined.." "..i] = {
-        PrettyName = prettyPlural.."~"..pretty.." Legend~UCI Defined ".." "..i,
+        PrettyName = prettyPlural.."~Definition~"..pretty.." "..i.."~UCI Defined",
         Style = "Button",
         ButtonStyle = "Toggle",
         StrokeColor = Colors.Yellow,
@@ -285,7 +288,7 @@ function BuildEditPage(pageType)
         Size = CustomSize(5,100)
       }
       layout[defs.legend.." "..i] = {
-        PrettyName = prettyPlural.."~"..pretty.." Legend~"..pretty.." "..i,
+        PrettyName = prettyPlural.."~Definition~"..pretty.." "..i.."~Legend",
         Style = "Text",
         StrokeColor = Colors.Yellow,
         Position = {CustomPosX(55), TempY},
@@ -379,9 +382,6 @@ if CurrentPage == "Setup" then
     Size = DEFAULT_INPUT_SIZE,
     FontSize = INPUT_SIZE,
   })
-  layout['GetGroups'] = {
-    PrettyName="Get Groups", Style = "Button",Position = {CustomPosX(80),TempY},Size = CustomSize(20,100),Legend="Test"
-  }
   LineBreak()
   layout["WebAddress"] = {
     PrettyName = "ASM Web Address",
@@ -440,9 +440,9 @@ if CurrentPage == "Setup" then
 elseif CurrentPage == "Wall Config" then
   AddLogo()
   AddSubheading("Discovered Walls",0,100)
-  layout["GetWalls"] = {PrettyName = "Wall Defnitions~Get Walls",Style="Button",ButtonStyle = "Trigger",Legend = "REFRESH",Position = {CustomPosX(80), TempY},Size = CustomSize(20),}
+  layout["GetWalls"] = {PrettyName = "Wall Config~Get Walls",Style="Button",ButtonStyle = "Trigger",Legend = "REFRESH",Position = {CustomPosX(80), TempY},Size = CustomSize(20),}
   LineBreak(1.2)
-  layout["AvailableWalls"] = {PrettyName = "Wall Defnitions~Available Walls",Style="ComboBox",StrokeColor = Colors.Yellow,Position = {DEFAULT_INPUT_X, TempY},Size = DEFAULT_INPUT_SIZE,}
+  layout["AvailableWalls"] = {PrettyName = "Wall Config~Available Walls",Style="ComboBox",StrokeColor = Colors.Yellow,Position = {DEFAULT_INPUT_X, TempY},Size = DEFAULT_INPUT_SIZE,}
   ---
   LineBreak(2)
   AddHeader("WALL DEFINITION")
@@ -450,13 +450,13 @@ elseif CurrentPage == "Wall Config" then
   AddSubheading("WALL NAME",55,45)
   LineBreak()
   layout["WallID"] = {
-    PrettyName = "Wall Config~Wall ID",
+    PrettyName = "Wall Config~Definition~Wall ID",
     Style="Text",
     Position = {DEFAULT_INPUT_X, TempY},
     Size = CustomSize(45,100),
   }
   layout["WallName"] = {
-    PrettyName = "Wall Config~Wall Name",
+    PrettyName = "Wall Config~Definition~Wall Name",
     Style="Text",
     Position = {CustomPosX(55), TempY},
     Size = CustomSize(45,100),
@@ -467,14 +467,14 @@ elseif CurrentPage == "Wall Config" then
   AddSubheading("width",55,20)
   AddSubheading("height",80,20)
   LineBreak()
-  layout["Wall_X"] = {PrettyName = "Wall Config~Wall X",Style="Text",Position = {DEFAULT_INPUT_X, TempY},Size = CustomSize(20,100),}
-  layout["Wall_Y"] = {PrettyName = "Wall Config~Wall Y",Style="Text",Position = {CustomPosX(25), TempY},Size = CustomSize(20,100),}
-  layout["Wall_Width"] = {PrettyName = "Wall Config~Wall Width",Style="Text",Position = {CustomPosX(55), TempY},Size = CustomSize(20,100),}
-  layout["Wall_Height"] = {PrettyName = "Wall Config~Wall Height",Style="Text",Position = {CustomPosX(80), TempY},Size = CustomSize(20,100),}
+  layout["Wall_X"] = {PrettyName = "Wall Config~Definition~Wall X",Style="Text",Position = {DEFAULT_INPUT_X, TempY},Size = CustomSize(20,100),}
+  layout["Wall_Y"] = {PrettyName = "Wall Config~Definition~Wall Y",Style="Text",Position = {CustomPosX(25), TempY},Size = CustomSize(20,100),}
+  layout["Wall_Width"] = {PrettyName = "Wall Config~Definition~Wall Width",Style="Text",Position = {CustomPosX(55), TempY},Size = CustomSize(20,100),}
+  layout["Wall_Height"] = {PrettyName = "Wall Config~Definition~Wall Height",Style="Text",Position = {CustomPosX(80), TempY},Size = CustomSize(20,100),}
   LineBreak(2)
   AddSubheading("Select Default ViewScreen:",0,50)
   layout["Wall_VS"] = {
-    PrettyName = "Wall Config~ViewScreen",
+    PrettyName = "Wall Config~Definition~Default ViewScreen",
     Style="ComboBox",
     StrokeColor = Colors.Yellow,
     CornerRadius = 5,
@@ -483,6 +483,7 @@ elseif CurrentPage == "Wall Config" then
   }
   layout["ClearVS"] = {
     Style="Button",
+    PrettyName = "Wall Config~Clear ViewScreen",
     ButtonStyle = "Trigger",
     CornerRadius = 5,
     StrokeColor = Colors.Red,
@@ -495,20 +496,20 @@ elseif CurrentPage == "Wall Config" then
   AddSubheading("Wall Layouts",0,45)
   AddSubheading("Wall Templates",55,45)
   LineBreak()
-  layout["Wall_Layouts"] = {PrettyName = "Wall Config~Layouts",Style="ListBox",Position = {DEFAULT_INPUT_X, TempY},Size = CustomSize(45,500),}
+  layout["Wall_Layouts"] = {PrettyName = "Wall Config~Available Layouts",Style="ListBox",Position = {DEFAULT_INPUT_X, TempY},Size = CustomSize(45,500),}
   layout["Wall_Templates"] = {
-    PrettyName = "Wall Config~Templates",
+    PrettyName = "Wall Config~Available Templates",
     Style="ListBox",
     Position = {CustomPosX(55), TempY},
     Size = CustomSize(45,500),
   }
   LineBreak(5)
-  layout["LoadLayout"] = {PrettyName = "Layouts~Load Selected Layout",Style="Button",ButtonStyle = "Trigger",Legend = "LOAD SELECTED LAYOUT",Position = {DEFAULT_INPUT_X, TempY},Size = CustomSize(45,100),}
+  layout["LoadLayout"] = {PrettyName = "Wall Config~Load Selected Layout",Style="Button",ButtonStyle = "Trigger",Legend = "LOAD SELECTED LAYOUT",Position = {DEFAULT_INPUT_X, TempY},Size = CustomSize(45,100),}
   LineBreak()
   AddHeader("CURRENT CONTENT")
   for i = 1,5 do
     layout["VS_SourceView_Select "..i] = {
-      PrettyName = "Wall Config~VS Select~VS "..i,
+      PrettyName = "Wall Config~ViewScreen Select~VS "..i,
       Style="Button",
       ButtonStyle = "Toggle",
       CornerRadius = 5,
@@ -516,20 +517,11 @@ elseif CurrentPage == "Wall Config" then
       Size = CustomSize(10,100),
     }
   end
-  for i = 1,5 do
-    layout["VS_SourceView_Select "..i] = {
-      Style="Button",
-      ButtonStyle = "Toggle",
-      CornerRadius = 5,
-      Position = {CustomPosX((i-1)*10), TempY},
-      Size = CustomSize(10,100),
-    }
-  end
-  layout['GetWallSources'] = {PrettyName = "Wall Config~Get Sources",Style="Button",ButtonStyle="Trigger",Legend = "Refresh",Position = {CustomPosX(80), TempY},Size = CustomSize(20),}
+  layout['GetWallSources'] = {PrettyName = "Wall Config~Get Wall Content",Style="Button",ButtonStyle="Trigger",Legend = "Refresh",Position = {CustomPosX(80), TempY},Size = CustomSize(20),}
   LineBreak()
   for i = 1,5 do
     layout["LoadedSources "..i] = {
-      PrettyName = "Wall Config~Loaded Sources "..i,
+      PrettyName = "Wall Config~Loaded Sources~ViewScreen "..i,
       Style="ListBox",
       Position = {DEFAULT_INPUT_X, TempY},
       Size = CustomSize(100,600),
