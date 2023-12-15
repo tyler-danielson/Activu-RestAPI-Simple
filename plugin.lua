@@ -1,6 +1,6 @@
 -- Vis|Ability Interface Server Connect Plugin
 -- by Activu
--- June 2022
+-- December 2023
 
 
 -- Information block for the plugin

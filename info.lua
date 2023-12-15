@@ -1,7 +1,7 @@
 PluginInfo = {
   Name = "Activu~Basic Control",
   Version = "1.0",
-  BuildVersion = "1.0.0.1798",
+  BuildVersion = "1.0.0.0",
   Id = "Activu RestAPI Simple",
   Author = "Tyler Danielson",
   Description = "A plugin to interface with Activu RestAPI.  Written by Tyler Danielson for Activu Corp.",
