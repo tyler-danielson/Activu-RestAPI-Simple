@@ -194,6 +194,7 @@ function BuildEditPage(pageType)
   layout[defs.triggerAll] = {
     PrettyName = prettyPlural.."~Any "..pretty.." Trigger",
     Style = "LED",
+    Legend = "ANY",
     Position = {CustomPosX(88), TempY},
     Size = CustomSize(12),
   }
@@ -215,7 +216,6 @@ function BuildEditPage(pageType)
   
   LineBreak()
   for i = 1, numOfButtons do
-    --local Y_Pos = TempY+25*(i-1)
     layout[defs.edit.." "..i] = {
       PrettyName = prettyPlural.."~Edit "..pretty.." Select~"..pretty.." "..i,
       Style = "Button",
@@ -372,8 +372,6 @@ end
 --Connection Setup Page
 if CurrentPage == "Setup" then
   AddLogo()
-  --TempY = COMMON_MARGIN + LOGO_HEIGHT + DELTA_Y
-  -- web address input
   AddHeader("CONNECTION")
   table.insert(graphics,{
     Type = "Text",
@@ -420,22 +418,59 @@ if CurrentPage == "Setup" then
     FontSize = 15
   }
   LineBreak(2)
-  AddHeader("Previous Commands")
+  AddHeader("Previous Commands (Click to Change)")
   layout['Last_Commands'] = {
     PrettyName="Last Commands",
-    Style = "ListBox",
+    Style="ComboBox",
     Position = {DEFAULT_INPUT_X,TempY},
-    Size = CustomSize(100,300)
+    Size = CustomSize(100),
+    StrokeColor = Colors.Yellow
   }
-  LineBreak(3)
-  AddHeader("Response Data")
-  layout['ResponseBody'] =  {
-    PrettyName="Response Body",
+  LineBreak(1.5)
+  AddSubheading("COMMAND",0,30)
+  AddSubheading("CODE",32,10)
+  AddSubheading("ERROR",45,55)
+  LineBreak()  
+  layout['CalledCommand'] =  {
+    PrettyName="Debug~Last Command",
+    Style = "TextBox",
+    Position = {CustomPosX(0), TempY},
+    Size = CustomSize(30)
+  }
+  layout['ResponseCode'] =  {
+    PrettyName="Debug~Last Code",
+    Style = "TextBox",
+    Position = {CustomPosX(32), TempY},
+    Size = CustomSize(10)
+  }
+  layout['ResponseError'] =  {
+    PrettyName="Debug~Last Error",
+    Style = "TextBox",
+    Position = {CustomPosX(45), TempY},
+    Size = CustomSize(55)
+  }
+  LineBreak(1)
+  AddSubheading("LAST URL CALLED",0,100)
+  LineBreak()
+  layout['ResponseURL'] =  {
+    PrettyName="Debug~Last URL",
     Style = "TextBox",
     Position = {DEFAULT_INPUT_X,TempY},
-    Size = CustomSize(100,300)
+    Size = CustomSize(100),
+    WordWrap = true
   }
-
+  LineBreak()
+  AddSubheading("RESPONSE DATA",0,100)
+  LineBreak()
+  layout['ResponseData'] =  {
+    PrettyName="Debug~Last Data",
+    Style = "TextBox",
+    Position = {DEFAULT_INPUT_X,TempY},
+    Size = CustomSize(100,600),
+    WordWrap = true
+  }
+  LineBreak(2)
+--------------------------------
 
 elseif CurrentPage == "Wall Config" then
   AddLogo()
