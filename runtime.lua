@@ -121,12 +121,20 @@ LastResponses = {}
 --********************************************************************************
 
 --********************************************************************************
---* Function: Debug(response)
+--* Function: PrintDebug(level,debut)
 --* Description: prints data into console and debug window.
 --********************************************************************************
-function Debug(response)
-  local newString = string.sub(TxtDebug.String..'\r\r'..response, DEBUG_WINDOW_SIZE)
-  TxtDebug.String = newString
+function PrintDebug( level, debug )
+	if Properties["Debug Print"].Value == level then
+		print(debug)
+	elseif level == "Tx" and Properties["Debug Print"].Value == "Tx/Rx" then
+		print(debug)
+	elseif level == "Rx" and Properties["Debug Print"].Value == "Tx/Rx" then
+		print(debug)
+	elseif Properties["Debug Print"].Value == "All" then
+		print(debug)
+	end
+	
 end
 
 
@@ -175,10 +183,11 @@ end
 
 
 --********************************************************************************
---* Function: LoadWalls()
+--* Function: LoadWalls(data)
 --* Description: populate Discovered Walls based on pulled data
 --********************************************************************************
 function LoadWalls(data)
+  printFunction(debug.getinfo(1, "n").name, data);
   AvailableWalls = qsc_json.decode(data)
   SelectWalls.Choices = OnlyNames(AvailableWalls)
   CheckIfPopulated(SelectWalls)
@@ -187,10 +196,50 @@ end
 
 
 --********************************************************************************
+--* Function: printFunction(name,content)
+--* Description: takes function name and content, converts it, and sends to debug
+--********************************************************************************
+function printFunction(name,content)
+  if content == nil then content = "" end
+  if type(content) == "userdata" then content = "" end
+  if type(content) == "table" then content = table_to_string(content) end
+  PrintDebug("Function Calls",name.."("..content..")")
+end
+
+
+function table_to_string(tbl)
+  local result = "{"
+  for k, v in pairs(tbl) do
+    -- Check the key type (ignore any numerical keys - assume its an array)
+    if type(k) == "string" then
+        result = result.."\""..k.."\""..":"
+    end
+
+    -- Check the value type
+    if type(v) == "table" then
+        result = result..table_to_string(v)
+    elseif type(v) == "boolean" then
+        result = result..tostring(v)
+    else
+        result = result.."\""..v.."\""
+    end
+    result = result..","
+  end
+  -- Remove leading commas from the result
+  if result ~= "{" then
+    result = result:sub(1, result:len()-1)
+  end
+  return result.."}"
+end
+
+
+
+--********************************************************************************
 --* Function: PopulateWallData()
 --* Description: populate wall data
 --********************************************************************************
 function PopulateWallData(data)
+  printFunction(debug.getinfo(1, "n").name,data);
   local wallData = qsc_json.decode(data)
   local geometry = wallData.geometry
   AvailableLayouts = wallData.layouts
@@ -221,6 +270,7 @@ end
 --* Description: updates available layouts/script/sources based on incoming data
 --********************************************************************************
 function PopulateData(type,data)
+  printFunction(debug.getinfo(1, "n").name,type..','..data);
   local available = qsc_json.decode(data)
   local types = type..'s'
   local _editDef = _G['edit'..type..'Def']
@@ -252,7 +302,7 @@ end
 --* Description: checks if current object is populated.  
 --* If not, sets to first choice
 --********************************************************************************
-function CheckIfPopulated(object,value)
+function CheckIfPopulated(object)
   if object.String == "" then
     object.String = object.Choices[1]
   end
@@ -278,7 +328,6 @@ end
 --* Description: function for when a layout edit button is pressed
 --********************************************************************************
 function EditSelect(type,buttonID)
-  print(buttonID)
   local _btnEdit = _G['btn'..type..'Edit']
   for key,object in ipairs(_btnEdit) do
     object.Boolean = key == buttonID
@@ -319,6 +368,7 @@ end
 
 
 function EnableUCIEdit(type,i,bool)
+  printFunction(debug.getinfo(1, "n").name,type..','..i..","..bool);
   local legend = _G['edit'..type..'Legend'][i]
   local button = _G['btn'..type..'Call'][i]
   legend.IsDisabled = bool
@@ -335,6 +385,7 @@ end
 --* Description: populate preview window with relevant layout data
 --********************************************************************************
 function PopulateLayoutInfo(data)
+  printFunction(debug.getinfo(1, "n").name,data);
   local layoutData = qsc_json.decode(data)
   local sourceInstances = layoutData.sourceInstances
   local sourceNames = {"*click to show*"}
@@ -394,6 +445,7 @@ end
 --* Description: updates wall definition based on selected wall
 --********************************************************************************
 function UpdateWallInfo()
+  printFunction("UpdateWallInfo")
   local wallString = SelectWalls.String
   EditWallName.String = wallString
   EditWallID.String = GetID(AvailableWalls,wallString)
@@ -419,6 +471,7 @@ end
 --* Description: populate the currently loaded sources into tables
 --********************************************************************************
 function PopulateLoadedSources(data)
+  printFunction(debug.getinfo(1, "n").name,data)
   CurrentSources.all = qsc_json.decode(data)
   CurrentSources.template = {}
   CurrentSources.other = {}
@@ -461,6 +514,7 @@ end
 --* will temporarily add a source to the wall representation. 
 --********************************************************************************
 function AddSource(sourceID,sourceInstanceId,x,y,width,height) --add VS?
+  printFunction(debug.getinfo(1, "n").name,sourceID..','..sourceInstanceId..','..x..','..y..','..width..','..height);
   local vsIndex = GetVsNumber()
   for key,object in ipairs(EditWall_VS.Choices) do
     if EditWall_VS.String == object then
@@ -497,26 +551,11 @@ end
 
 
 --********************************************************************************
---* Function: TransformSource(sourceID,sourceInstanceId,x,y,w,h)
---* Description: add source to wall based on included info
---********************************************************************************
-function TransformSource(sourceID,sourceInstanceId,x,y,width,height)
-  local data = '{"sourceId": "'..sourceID..'"'
-  ..',"apiRegion": '
-    ..'{"x": '.. x
-    ..',"y": '.. y
-    ..',"width": '.. width
-    ..',"height": '.. height
-  ..'}}'
-  PUT('TransformSource',data,sourceInstanceId)
-end
-
-
---********************************************************************************
 --* Function: RemoveSource(sourceInstanceId)
 --* Description: removes the specific source instance from wall
 --********************************************************************************
 function RemoveSource(sourceInstanceId)
+  printFunction(debug.getinfo(1, "n").name,sourceInstanceId)
   DELETE('RemoveSource',sourceInstanceId)
 end
 
@@ -526,6 +565,7 @@ end
 --* Description: clear first viewscreen
 --********************************************************************************
 function ClearViewscreen()
+  printFunction(debug.getinfo(1, "n").name)
   CurrentSources.all = {} 
   local selectedVS = 1
   for key,obj in ipairs(EditWall_VS.Choices) do
@@ -536,11 +576,11 @@ end
 
 
 --********************************************************************************
---* Function: BuildCoordsFromLayout(sourceInfo,wallOnly)
+--* Function: BuildCoordsFromLayout(sourceInfo)
 --* Description: creates a table of xywh settings for list of sources
 --********************************************************************************
-function BuildCoordsFromLayout(sourceInfo,wallOnly)
-
+function BuildCoordsFromLayout(sourceInfo)
+  printFunction(debug.getinfo(1, "n").name,sourceInfo)
   local layoutCoords = {}
   for key,object in ipairs(sourceInfo) do
     local region = object.region
@@ -579,14 +619,13 @@ end
 --* Function: BuildGrid(layout)
 --* Description: Utilize SVG to build template select buttons
 --********************************************************************************
-function BuildGrid(layout,type,config)
-  --if config == nil then config = GetGridConfig() end
-  local svgWidth = EditWall_Width.String--AspectRatio[1]*192--*1920
-  local svgHeight = EditWall_Height.String--AspectRatio[2]*108--*1080
+function BuildGrid(layout)
+  local svgWidth = EditWall_Width.String
+  local svgHeight = EditWall_Height.String
   local layoutString = ""
-  local backgroundColor = 'black'--config.defaultBackColor
-  local borderColor = 'white'--config.defaultGridColor
-  local strokeWidth = svgWidth*.01--config.defaultGridWidth
+  local backgroundColor = 'black'
+  local borderColor = 'white'
+  local strokeWidth = svgWidth*.01
   EzSVG.setStyle({
     stroke_width= strokeWidth,
     stroke= borderColor,
@@ -600,12 +639,11 @@ function BuildGrid(layout,type,config)
   ..'stroke:'..borderColor
   ..';stroke-width:'..strokeWidth..';">'
 
-  
   for k,o in ipairs(layout) do
-    local x = (o[1])--*svgWidth)--/100)
-    local y = (o[2])--*svgHeight)--/100)
-    local width = (o[3])--*svgWidth)--/100)
-    local height = (o[4])--*svgHeight)--/100)
+    local x = (o[1])
+    local y = (o[2])
+    local width = (o[3])
+    local height = (o[4])
     local newString = '<rect '..
       'x="'..x..'" '..
       'y="'..y..'" '..
@@ -652,14 +690,12 @@ end
 --* Function: GetCommandURL(command)
 --* Description: builds Post URL based on given string
 --********************************************************************************
-function GetCommandURL(command,params,params2)
+function GetCommandURL(command,params)
   local webAddr = EditWebAddr.String.."/api/v1/"
   local apiStr = "key="..EditAPI.String
   local url = webAddr
   if command == "AddSource" then
     url = url.."walls/"..EditWallID.String.."/sources?"
-  elseif command == "TransformSource" then
-    url = url.."walls/"..EditWallID.String.."/sources/"..params2.."/transform?"
   elseif command == "GetWalls" then
     url = url.."walls?"
   elseif command == "GetWallData" then
@@ -667,7 +703,7 @@ function GetCommandURL(command,params,params2)
   elseif command == "loadLayout" then
     url = url.."walls/"..EditWallID.String.."/loadlayout?layoutId="..params.."&"
   elseif command == "loadScript" then
-    url = url.."scripts/"..params.."/execute?"
+    url = url.."scripts/"..params.."/execute?queryScriptParameters=none&"
   elseif command == "WallSources" then
     url = url.."walls/"..EditWallID.String.."/sources?"
   elseif command == "ClearVS" then
@@ -692,12 +728,12 @@ end
 --* Function: POST(command,dataString)
 --* Description: sends post command with relevant data
 --********************************************************************************
-function POST(command,data,data2)
-  local url = GetCommandURL(command,data,data2)
-  print('post',data,data2)
+function POST(command,data)
+  local url = GetCommandURL(command,data)
+  if command == 'loadScript' then data = "true" end
+  PrintDebug("Tx","HTTP Post \n URL: "..url.."\n Data: "..data)
   HttpClient.Post {
     Url = url,
-    --Method = "POST",
     Data = data,
     Auth = "basic",
     Timeout = 30,
@@ -711,15 +747,14 @@ end
 
 
 --********************************************************************************
---* Function: PUT(command,dataString)
+--* Function: PUT(command,data,data2)
 --* Description: sends post command with relevant data
 --********************************************************************************
-function PUT(command,data,data2)
-  local url = GetCommandURL(command,data,data2)
-  print('put',url,data,data2)
+function PUT(command,data)
+  local url = GetCommandURL(command,data)
+  PrintDebug("Tx","HTTP PUT \n URL: "..url.."\n Data: "..data)
   HttpClient.Put {
     Url = url,
-    --Method = "POST",
     Data = data,
     Auth = "basic",
     Timeout = 30,
@@ -738,7 +773,7 @@ end
 --********************************************************************************
 function DELETE(command,data)
   local url = GetCommandURL(command,data)
-  print('delete',url)
+  PrintDebug("Tx","HTTP Delete \n URL: "..url.."\n Data: "..data)
   HttpClient.Upload {
     Url = url,
     Method = "DELETE",
@@ -761,6 +796,7 @@ end
 function GET(command,params)
   if params == nil then params = "" end
   local url = GetCommandURL(command,params)
+  PrintDebug("Tx","HTTP Get \n URL: "..url)
   HttpClient.Download {
     Url = url,
     Auth = "basic",
@@ -837,6 +873,7 @@ function done(tbl, code, data, e)
   table.sort(lastCommands, function(a, b) return a > b end)
   EditLastCommands.Choices = lastCommands
   EditLastCommands.String = EditLastCommands.Choices[1]
+  PrintDebug("Rx", string.format("Response Code: %i\t\tErrors: %s\rData: %s",code, e or "None", data))
   ShowResponse()
 end
 
@@ -847,6 +884,7 @@ end
 --********************************************************************************
 function ShowResponse()
   local timestamp,command = EditLastCommands.String:match("(.+) %[(.+)%]")
+  printFunction(debug.getinfo(1, "n").name,timestamp..','..command)
   local response = LastResponses[timestamp]
   local code = response[2]
   local data = response[3]
@@ -880,6 +918,7 @@ end
 --* run GetWalls command to test API key
 --********************************************************************************
 function EstablishConnection()
+  printFunction("EstablishConnection")
   if EditAPI.String ~= "" and EditWebAddr.String ~= "" then
     GET("GetWalls")
   elseif EditWebAddr.String == "" or EditWebAddr.String == DEFAULT_WEBADDR then
@@ -940,16 +979,13 @@ for k,type in ipairs(SIMPLE_COMMANDS) do
     object.EventHandler = function() 
       ComboSelect(key,_btnEdit)
       GetPreview(type,key)
-      --hide ID buttons based on selection
-      for j,o in ipairs(_editID) do
+      for j,o in ipairs(_editID) do --hide ID buttons based on selection
         o.IsInvisible = j ~= key
       end
     end
   end
   _btnGet.EventHandler = function() GET("Get"..types) end
 end
-
-
 
 
 --********************************************************************************
