@@ -27,7 +27,7 @@ controls ={
   {Name = "ResponseData",ControlType="Text",UserPin=true,PinStyle="Output"},
   {Name = "ResponseError",ControlType="Text",UserPin=true,PinStyle="Output"},
   {Name = "ResponseURL",ControlType="Text",UserPin=true,PinStyle="Output"},
-  {Name = "Status",ControlType = "Indicator",IndicatorType = "Status",PinStyle = "Output",UserPin = true}
+  {Name = "Status",ControlType = "Indicator",IndicatorType = Reflect and "StatusGP" or "Status",PinStyle = "Output",UserPin = true} -- Set IndicatorType per certification requirements
 }
 
 --Build Dynamic Controls based of simple activu commands

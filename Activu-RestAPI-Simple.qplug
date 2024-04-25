@@ -162,7 +162,7 @@ function GetControls(props)
     {Name = "ResponseData",ControlType="Text",UserPin=true,PinStyle="Output"},
     {Name = "ResponseError",ControlType="Text",UserPin=true,PinStyle="Output"},
     {Name = "ResponseURL",ControlType="Text",UserPin=true,PinStyle="Output"},
-    {Name = "Status",ControlType = "Indicator",IndicatorType = "Status",PinStyle = "Output",UserPin = true}
+    {Name = "Status",ControlType = "Indicator",IndicatorType = Reflect and "StatusGP" or "Status",PinStyle = "Output",UserPin = true} -- Set IndicatorType per certification requirements
   }
   
   --Build Dynamic Controls based of simple activu commands
@@ -1764,7 +1764,7 @@ if Controls then
   --* Description: Initialization code for the plugin
   --********************************************************************************
   function Initialize()
-    ParseCode(2)
+  -- ParseCode(2) --Comment out for Certification Standards
     HideSourceLists(1)
     PopulateDefaults()    
     for k,type in ipairs(SIMPLE_COMMANDS) do

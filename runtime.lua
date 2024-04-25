@@ -993,7 +993,7 @@ end
 --* Description: Initialization code for the plugin
 --********************************************************************************
 function Initialize()
-  ParseCode(2)
+  -- ParseCode(2) --Comment out for Certification Standards
   HideSourceLists(1)
   PopulateDefaults()    
   for k,type in ipairs(SIMPLE_COMMANDS) do
