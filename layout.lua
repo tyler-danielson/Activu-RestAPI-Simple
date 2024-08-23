@@ -191,12 +191,13 @@ function BuildEditPage(pageType)
     Position = {CustomPosX(30), TempY},
     Size = CustomSize(40),
   }
+  AddSubheading("LOADING:",80,14)
   layout[defs.triggerAll] = {
     PrettyName = prettyPlural.."~Any "..pretty.." Trigger",
     Style = "LED",
-    Legend = "ANY",
-    Position = {CustomPosX(88), TempY},
-    Size = CustomSize(12),
+    --Legend = "ANY",
+    Position = {CustomPosX(95), TempY},
+    Size = CustomSize(5),
   }
   LineBreak()
   AddSubheading("🔍",0,5)
@@ -209,7 +210,7 @@ function BuildEditPage(pageType)
     AddSubheading("ADD",76,12)
     AddSubheading("REMOVE",88,12)
   else
-    AddSubheading("UCI?",48,7)
+    AddSubheading("UCI*",48,7)
     AddSubheading("LEGEND",55,30)
     AddSubheading("TRIGGER",88,12)
   end
@@ -307,7 +308,8 @@ function BuildEditPage(pageType)
     
       LineBreak(1.5)
   end
-  LineBreak(-3.5)
+  AddSubheading('*Enabling "UCI" will prevent plugin from overriding the legend applied to a UCI button',0,100)
+  LineBreak(-2.5)
   ------
   
 end
@@ -456,10 +458,10 @@ if CurrentPage == "Setup" then
     PrettyName="Debug~Last URL",
     Style = "TextBox",
     Position = {DEFAULT_INPUT_X,TempY},
-    Size = CustomSize(100),
+    Size = CustomSize(100,200),
     WordWrap = true
   }
-  LineBreak()
+  LineBreak(2)
   AddSubheading("RESPONSE DATA",0,100)
   LineBreak()
   layout['ResponseData'] =  {

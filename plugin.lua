@@ -57,6 +57,13 @@ function RectifyProperties(props)
   return props
 end
 
+-- Optional function to define components used within the plugin
+function GetComponents(props)
+  local components = {}
+  --[[ #include "components.lua" ]]
+  return components
+end
+
 -- Defines the Controls used within the plugin
 function GetControls(props)
   local controls = {}

@@ -7,7 +7,7 @@
 PluginInfo = {
   Name = "Activu~Basic Control",
   Version = "1.0",
-  BuildVersion = "1.0.0.191",
+  BuildVersion = "1.0.0.268",
   Id = "Activu RestAPI Simple",
   Author = "Tyler Danielson",
   Description = "A plugin to interface with Activu RestAPI.  Written by Tyler Danielson for Activu Corp.",
@@ -113,12 +113,15 @@ end
 -- Define User configurable Properties of the plugin
 function GetProperties()
   local props = {}
-  props={
-    {Name = "Number of Layouts",Type = "integer",Min = 2,Max = 25,Value = 5},
-    {Name = "Number of Scripts",Type = "integer",Min = 2,Max = 25,Value = 5},
-    {Name = "Number of Sources",Type = "integer",Min = 2,Max = 25,Value = 5},
-    {Name ="Debug Print",Type = "enum", Choices = {"None", "Tx/Rx", "Tx", "Rx", "Function Calls", "All"},Value = "None"},
-  }
+  SIMPLE_COMMANDS = {'Layout','Script','Source'}
+  props={}
+  
+  for k,type in ipairs(SIMPLE_COMMANDS) do
+    table.insert(props,{Name = "Number of "..type.."s",Type = "integer",Min = 2,Max = 25,Value = 5})
+    table.insert(props,{Name = type.." Load Timeout",Type = "integer",Min = 1,Max = 30,Value = 3})
+  end
+  
+  table.insert(props,{Name ="Debug Print",Type = "enum", Choices = {"None", "Tx/Rx", "Tx", "Rx", "Function Calls", "All"},Value = "None"})
   return props
 end
 
@@ -128,6 +131,23 @@ function RectifyProperties(props)
     props["Debug Print"].IsHidden = true
   end
   return props
+end
+
+-- Optional function to define components used within the plugin
+function GetComponents(props)
+  local components = {}
+  table.insert(
+    components,
+    {
+      Name = "SecretStorage", -- Name of the component to be used in your runtime
+      Type = "custom_controls",
+      Properties = {
+        type_1 = 13, -- Text Edit
+        count_1 = 1 -- Number of text edits with control name of text.n, where n is the index
+      }
+    }
+  )
+  return components
 end
 
 -- Defines the Controls used within the plugin
@@ -162,7 +182,7 @@ function GetControls(props)
     {Name = "ResponseData",ControlType="Text",UserPin=true,PinStyle="Output"},
     {Name = "ResponseError",ControlType="Text",UserPin=true,PinStyle="Output"},
     {Name = "ResponseURL",ControlType="Text",UserPin=true,PinStyle="Output"},
-    {Name = "Status",ControlType = "Indicator",IndicatorType = "Status",PinStyle = "Output",UserPin = true}
+    {Name = "Status",ControlType = "Indicator",IndicatorType = Reflect and "StatusGP" or "Status",PinStyle = "Output",UserPin = true}
   }
   
   --Build Dynamic Controls based of simple activu commands
@@ -182,7 +202,7 @@ function GetControls(props)
     table.insert(controls,{Name= pageDefs[type].id, ControlType="Text",Count=qty,UserPin=true,PinStyle="Both"})
     table.insert(controls,{Name= pageDefs[type].preview.name,ControlType="Button",ButtonType="Toggle",Count=1,UserPin=true,PinStyle="Both"})
     table.insert(controls,{Name= pageDefs[type].get, ControlType="Button",ButtonType="Trigger",Count=1,UserPin=true,PinStyle="Both"})
-    table.insert(controls,{Name= pageDefs[type].triggerAll, ControlType="Button",ButtonType="Trigger",Count=1,UserPin=true,PinStyle="Output"})
+    table.insert(controls,{Name= pageDefs[type].triggerAll, ControlType = "Indicator",IndicatorType = "Led",Count=1,UserPin=true,PinStyle="Output"})
   end
   return controls
 end
@@ -384,12 +404,13 @@ function GetControlLayout(props)
       Position = {CustomPosX(30), TempY},
       Size = CustomSize(40),
     }
+    AddSubheading("LOADING:",80,14)
     layout[defs.triggerAll] = {
       PrettyName = prettyPlural.."~Any "..pretty.." Trigger",
       Style = "LED",
-      Legend = "ANY",
-      Position = {CustomPosX(88), TempY},
-      Size = CustomSize(12),
+      --Legend = "ANY",
+      Position = {CustomPosX(95), TempY},
+      Size = CustomSize(5),
     }
     LineBreak()
     AddSubheading("🔍",0,5)
@@ -402,7 +423,7 @@ function GetControlLayout(props)
       AddSubheading("ADD",76,12)
       AddSubheading("REMOVE",88,12)
     else
-      AddSubheading("UCI?",48,7)
+      AddSubheading("UCI*",48,7)
       AddSubheading("LEGEND",55,30)
       AddSubheading("TRIGGER",88,12)
     end
@@ -500,7 +521,8 @@ function GetControlLayout(props)
       
         LineBreak(1.5)
     end
-    LineBreak(-3.5)
+    AddSubheading('*Enabling "UCI" will prevent plugin from overriding the legend applied to a UCI button',0,100)
+    LineBreak(-2.5)
     ------
     
   end
@@ -649,10 +671,10 @@ function GetControlLayout(props)
       PrettyName="Debug~Last URL",
       Style = "TextBox",
       Position = {DEFAULT_INPUT_X,TempY},
-      Size = CustomSize(100),
+      Size = CustomSize(100,200),
       WordWrap = true
     }
-    LineBreak()
+    LineBreak(2)
     AddSubheading("RESPONSE DATA",0,100)
     LineBreak()
     layout['ResponseData'] =  {
@@ -807,6 +829,7 @@ if Controls then
   EditResponseURL = Controls.ResponseURL
   TxtDebug = Controls.debug
   EditSendStr = Controls.SendString
+  APIKey = SecretStorage["text.1"]
   
   
   --********************************************************************************
@@ -828,6 +851,7 @@ if Controls then
     _G['edit'..type..'_width'] = Controls[pageDefs[type].region.width]
     _G['edit'..type..'_height'] = Controls[pageDefs[type].region.height]
     _G['btn'..type..'_trigger'] = Controls[pageDefs[type].triggerAll]
+    _G['timer'..type] = Timer.New()
   end
   ----
   
@@ -974,7 +998,6 @@ if Controls then
     if content == nil then content = "" end
     if type(content) == "userdata" then content = "" end
     if type(content) == "table" then content = table_to_string(content) end
-    PrintDebug("Function Calls",name.."("..content..")")
   end
   
   
@@ -1100,8 +1123,12 @@ if Controls then
   --********************************************************************************
   function EditSelect(type,buttonID)
     local _btnEdit = _G['btn'..type..'Edit']
+    local _editID = _G['edit'..type..'ID']
     for key,object in ipairs(_btnEdit) do
       object.Boolean = key == buttonID
+    end
+    for j,o in ipairs(_editID) do --hide ID buttons based on selection
+      o.IsInvisible = j ~= buttonID
     end
     GetPreview(type,buttonID)
   end
@@ -1116,13 +1143,11 @@ if Controls then
     local id = GetID(_G['Available'..type..'s'],name)
     local _uci = _G['btn'..type..'UCIEdit']
     local _legend = _G['edit'..type..'Legend']
-    
     if not _uci[key].Boolean and type ~= 'Source' then
       _G['btn'..type..'Call'][key].Legend = name
     end
     _legend[key].String = name
     _G['edit'..type..'ID'][key].String = id
-    
     if type == 'Layout' then
       GET("GetLayoutInfo",id)
     end
@@ -1139,7 +1164,7 @@ if Controls then
   
   
   function EnableUCIEdit(type,i,bool)
-    printFunction(debug.getinfo(1, "n").name,type..','..i..","..bool);
+    printFunction(debug.getinfo(1, "n").name,type..','..i..","..tostring(bool));
     local legend = _G['edit'..type..'Legend'][i]
     local button = _G['btn'..type..'Call'][i]
     legend.IsDisabled = bool
@@ -1188,9 +1213,37 @@ if Controls then
     else
       POST('load'..type,ID)
     end
-    sharedTrigger:Trigger()
+    StartTimer(type)
   end
   
+  function StartTimer(type)
+    for k,command in ipairs(SIMPLE_COMMANDS) do
+      if type == command then 
+        _G[type..'tick'] = 0
+        _G['timer'..type]:Start(1) 
+        Controls[pageDefs[type].triggerAll].Boolean = true
+        end
+    end
+  end
+  
+  function StopTimer(type)
+    for k,command in ipairs(SIMPLE_COMMANDS) do
+      if type == command then 
+        _G['timer'..type]:Stop() 
+        Controls[pageDefs[type].triggerAll].Boolean = false
+      end
+    end
+  end
+  
+  function TimerFunc(timer)
+    for k,type in ipairs(SIMPLE_COMMANDS) do
+      if timer == _G['timer'..type] then
+        _G[type..'tick'] = _G[type..'tick'] + 1
+        if _G[type..'tick'] == Properties[type.." Load Timeout"].Value then StopTimer(type) end
+        Controls[pageDefs[type].triggerAll].Boolean = _G['timer'..type]:IsRunning()
+      end
+    end
+  end
   
   
   
@@ -1302,7 +1355,6 @@ if Controls then
     ..',"height": '.. height
     ..'}}'
     POST('AddSource',data)
-    --GET("WallSources")
   end
   
   
@@ -1359,15 +1411,7 @@ if Controls then
       local PctY = math.floor(region.y)
       local PctW = math.floor(region.width)
       local PctH = math.floor(region.height)
-      local wall = EditWallName.String
-      
-      --if wallOnly then
-      --  if string.find(object.id,wall.."template") then
-      --    table.insert(layoutCoords,{PctX,PctY,PctW,PctH,object.id,object.name,object.sourceId})
-      --  end
-      --else
-        table.insert(layoutCoords,{PctX,PctY,PctW,PctH,object.id,object.name,object.sourceId})
-      --end
+      table.insert(layoutCoords,{PctX,PctY,PctW,PctH,object.id,object.name,object.sourceId})
     end
     return layoutCoords
   end
@@ -1463,7 +1507,7 @@ if Controls then
   --********************************************************************************
   function GetCommandURL(command,params)
     local webAddr = EditWebAddr.String.."/api/v1/"
-    local apiStr = "key="..EditAPI.String
+    local apiStr = "key="..APIKey.String
     local url = webAddr
     if command == "AddSource" then
       url = url.."walls/"..EditWallID.String.."/sources?"
@@ -1614,17 +1658,24 @@ if Controls then
     local lastCommands = {}
     local formatTime = os.date ("%Y-%m-%d %H:%M:%S")
     
+    print('called command', CalledCommand)
     if e then --if there is an error, skip to next
     elseif CalledCommand == "GetWalls" then LoadWalls(data)
     elseif CalledCommand == "GetWallData" then PopulateWallData(data)
     elseif CalledCommand == "GetLayouts" then PopulateData('Layout',data)
     elseif CalledCommand == "GetScripts" then PopulateData('Script',data)
-    elseif CalledCommand == "loadLayout" then EditLayouts.String = ""
     elseif CalledCommand == "WallSources" then PopulateLoadedSources(data)
     elseif CalledCommand == "GetLayoutInfo" then PopulateLayoutInfo(data)
     elseif CalledCommand == "GetSources" then PopulateData('Source',data)
+    elseif CalledCommand == "loadLayout" then
+      EditLayouts.String = ""
+      --Controls[pageDefs['Layout'].triggerAll].Boolean = false
+      StopTimer("Layout")
+    elseif CalledCommand == "loadScript" then StopTimer('Script')--Controls[pageDefs['Script'].triggerAll].Boolean = false
+    elseif CalledCommand == "AddSource" then StopTimer('Source')--Controls[pageDefs['Source'].triggerAll].Boolean = false
     end
-  
+    
+    --_G['btn'..type..'_trigger'] = Controls[pageDefs[type].triggerAll]
   
     LastResponses[formatTime] = response
     LastResponses[formatTime].command = CalledCommand
@@ -1690,14 +1741,27 @@ if Controls then
   --********************************************************************************
   function EstablishConnection()
     printFunction("EstablishConnection")
-    if EditAPI.String ~= "" and EditWebAddr.String ~= "" then
+    if APIKey.String ~= "" and EditWebAddr.String ~= "" then
       GET("GetWalls")
     elseif EditWebAddr.String == "" or EditWebAddr.String == DEFAULT_WEBADDR then
       ParseCode(3)
-    elseif EditAPI.String == "" then
+    elseif APIKey.String == "" then
       ParseCode(4)
     end
   end
+  
+  
+  --********************************************************************************
+  --* Function: SetAPIKey()
+  --* Description: store API key in a hidden component and replace with *s
+  --* then test connection with Server
+  --********************************************************************************
+  function SetAPIKey()
+    APIKey.String = EditAPI.String
+    EditAPI.String = EditAPI.String:gsub(".", "*")
+    EstablishConnection()
+  end
+  
   
   
   --********************************************************************************
@@ -1709,7 +1773,7 @@ if Controls then
   BtnGetWallsources.EventHandler = UpdateWallInfo
   EditLastCommands.EventHandler = ShowResponse
   EditWebAddr.EventHandler = EstablishConnection
-  EditAPI.EventHandler = EstablishConnection
+  EditAPI.EventHandler = SetAPIKey
   
   for key,object in ipairs(BtnVsSrcSelect) do
     object.EventHandler = function() HideSourceLists(key) end
@@ -1724,13 +1788,14 @@ if Controls then
     local types = type..'s'
     local _btnGet = _G['btnGet'..types]
     local _btnUCIEdit = _G['btn'..type..'UCIEdit']
-    local _editSelect = _G[type..'EditSelect']
+    --local _editSelect = _G[type..'EditSelect']
     local _btnEdit =_G['btn'..type..'Edit']
     local _editLegend = _G['edit'..type..'Legend']
     local _btnCall = _G['btn'..type..'Call']
     local _btnRemove = _G['btn'..type..'Remove']
     local _editDef = _G['edit'..type..'Def']
     local _editID = _G['edit'..type..'ID']
+    
     for key,object in ipairs (_btnUCIEdit) do
       object.EventHandler = function() EnableUCIEdit(type,key,object.Boolean) end
     end
@@ -1748,7 +1813,7 @@ if Controls then
     end
     for key,object in ipairs(_editDef) do
       object.EventHandler = function() 
-        ComboSelect(key,_btnEdit)
+        EditSelect(type,key)
         GetPreview(type,key)
         for j,o in ipairs(_editID) do --hide ID buttons based on selection
           o.IsInvisible = j ~= key
@@ -1756,6 +1821,7 @@ if Controls then
       end
     end
     _btnGet.EventHandler = function() GET("Get"..types) end
+    _G['timer'..type].EventHandler = TimerFunc
   end
   
   
@@ -1764,7 +1830,7 @@ if Controls then
   --* Description: Initialization code for the plugin
   --********************************************************************************
   function Initialize()
-    ParseCode(2)
+    ParseCode(1)
     HideSourceLists(1)
     PopulateDefaults()    
     for k,type in ipairs(SIMPLE_COMMANDS) do
@@ -1772,8 +1838,8 @@ if Controls then
       local legend = _G['edit'..type..'Legend']
       local uciEdit = _G['btn'..type..'UCIEdit']
       for key,object in ipairs(call) do
-        if uciEdit[key].Boolean then
-          legend[key].IsDisabled = true  
+        if uciEdit[key].Boolean or type == "Source" then
+          legend[key].IsDisabled = true
         else
           object.Legend = legend[key].String
         end

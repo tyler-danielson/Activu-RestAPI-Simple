@@ -27,7 +27,7 @@ controls ={
   {Name = "ResponseData",ControlType="Text",UserPin=true,PinStyle="Output"},
   {Name = "ResponseError",ControlType="Text",UserPin=true,PinStyle="Output"},
   {Name = "ResponseURL",ControlType="Text",UserPin=true,PinStyle="Output"},
-  {Name = "Status",ControlType = "Indicator",IndicatorType = "Status",PinStyle = "Output",UserPin = true}
+  {Name = "Status",ControlType = "Indicator",IndicatorType = Reflect and "StatusGP" or "Status",PinStyle = "Output",UserPin = true}
 }
 
 --Build Dynamic Controls based of simple activu commands
@@ -47,5 +47,5 @@ for k,type in ipairs(SIMPLE_COMMANDS) do
   table.insert(controls,{Name= pageDefs[type].id, ControlType="Text",Count=qty,UserPin=true,PinStyle="Both"})
   table.insert(controls,{Name= pageDefs[type].preview.name,ControlType="Button",ButtonType="Toggle",Count=1,UserPin=true,PinStyle="Both"})
   table.insert(controls,{Name= pageDefs[type].get, ControlType="Button",ButtonType="Trigger",Count=1,UserPin=true,PinStyle="Both"})
-  table.insert(controls,{Name= pageDefs[type].triggerAll, ControlType="Button",ButtonType="Trigger",Count=1,UserPin=true,PinStyle="Output"})
+  table.insert(controls,{Name= pageDefs[type].triggerAll, ControlType = "Indicator",IndicatorType = "Led",Count=1,UserPin=true,PinStyle="Output"})
 end

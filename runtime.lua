@@ -36,6 +36,7 @@ EditResponseError = Controls.ResponseError
 EditResponseURL = Controls.ResponseURL
 TxtDebug = Controls.debug
 EditSendStr = Controls.SendString
+APIKey = SecretStorage["text.1"]
 
 
 --********************************************************************************
@@ -57,6 +58,7 @@ for k,type in ipairs(SIMPLE_COMMANDS) do
   _G['edit'..type..'_width'] = Controls[pageDefs[type].region.width]
   _G['edit'..type..'_height'] = Controls[pageDefs[type].region.height]
   _G['btn'..type..'_trigger'] = Controls[pageDefs[type].triggerAll]
+  _G['timer'..type] = Timer.New()
 end
 ----
 
@@ -203,7 +205,6 @@ function printFunction(name,content)
   if content == nil then content = "" end
   if type(content) == "userdata" then content = "" end
   if type(content) == "table" then content = table_to_string(content) end
-  PrintDebug("Function Calls",name.."("..content..")")
 end
 
 
@@ -329,8 +330,12 @@ end
 --********************************************************************************
 function EditSelect(type,buttonID)
   local _btnEdit = _G['btn'..type..'Edit']
+  local _editID = _G['edit'..type..'ID']
   for key,object in ipairs(_btnEdit) do
     object.Boolean = key == buttonID
+  end
+  for j,o in ipairs(_editID) do --hide ID buttons based on selection
+    o.IsInvisible = j ~= buttonID
   end
   GetPreview(type,buttonID)
 end
@@ -345,13 +350,11 @@ function GetPreview(type,key)
   local id = GetID(_G['Available'..type..'s'],name)
   local _uci = _G['btn'..type..'UCIEdit']
   local _legend = _G['edit'..type..'Legend']
-  
   if not _uci[key].Boolean and type ~= 'Source' then
     _G['btn'..type..'Call'][key].Legend = name
   end
   _legend[key].String = name
   _G['edit'..type..'ID'][key].String = id
-  
   if type == 'Layout' then
     GET("GetLayoutInfo",id)
   end
@@ -368,7 +371,7 @@ end
 
 
 function EnableUCIEdit(type,i,bool)
-  printFunction(debug.getinfo(1, "n").name,type..','..i..","..bool);
+  printFunction(debug.getinfo(1, "n").name,type..','..i..","..tostring(bool));
   local legend = _G['edit'..type..'Legend'][i]
   local button = _G['btn'..type..'Call'][i]
   legend.IsDisabled = bool
@@ -417,9 +420,37 @@ function LoadCommand(type,key)
   else
     POST('load'..type,ID)
   end
-  sharedTrigger:Trigger()
+  StartTimer(type)
 end
 
+function StartTimer(type)
+  for k,command in ipairs(SIMPLE_COMMANDS) do
+    if type == command then 
+      _G[type..'tick'] = 0
+      _G['timer'..type]:Start(1) 
+      Controls[pageDefs[type].triggerAll].Boolean = true
+      end
+  end
+end
+
+function StopTimer(type)
+  for k,command in ipairs(SIMPLE_COMMANDS) do
+    if type == command then 
+      _G['timer'..type]:Stop() 
+      Controls[pageDefs[type].triggerAll].Boolean = false
+    end
+  end
+end
+
+function TimerFunc(timer)
+  for k,type in ipairs(SIMPLE_COMMANDS) do
+    if timer == _G['timer'..type] then
+      _G[type..'tick'] = _G[type..'tick'] + 1
+      if _G[type..'tick'] == Properties[type.." Load Timeout"].Value then StopTimer(type) end
+      Controls[pageDefs[type].triggerAll].Boolean = _G['timer'..type]:IsRunning()
+    end
+  end
+end
 
 
 
@@ -531,7 +562,6 @@ function AddSource(sourceID,sourceInstanceId,x,y,width,height) --add VS?
   ..',"height": '.. height
   ..'}}'
   POST('AddSource',data)
-  --GET("WallSources")
 end
 
 
@@ -588,15 +618,7 @@ function BuildCoordsFromLayout(sourceInfo)
     local PctY = math.floor(region.y)
     local PctW = math.floor(region.width)
     local PctH = math.floor(region.height)
-    local wall = EditWallName.String
-    
-    --if wallOnly then
-    --  if string.find(object.id,wall.."template") then
-    --    table.insert(layoutCoords,{PctX,PctY,PctW,PctH,object.id,object.name,object.sourceId})
-    --  end
-    --else
-      table.insert(layoutCoords,{PctX,PctY,PctW,PctH,object.id,object.name,object.sourceId})
-    --end
+    table.insert(layoutCoords,{PctX,PctY,PctW,PctH,object.id,object.name,object.sourceId})
   end
   return layoutCoords
 end
@@ -692,7 +714,7 @@ end
 --********************************************************************************
 function GetCommandURL(command,params)
   local webAddr = EditWebAddr.String.."/api/v1/"
-  local apiStr = "key="..EditAPI.String
+  local apiStr = "key="..APIKey.String
   local url = webAddr
   if command == "AddSource" then
     url = url.."walls/"..EditWallID.String.."/sources?"
@@ -843,17 +865,24 @@ function done(tbl, code, data, e)
   local lastCommands = {}
   local formatTime = os.date ("%Y-%m-%d %H:%M:%S")
   
+  print('called command', CalledCommand)
   if e then --if there is an error, skip to next
   elseif CalledCommand == "GetWalls" then LoadWalls(data)
   elseif CalledCommand == "GetWallData" then PopulateWallData(data)
   elseif CalledCommand == "GetLayouts" then PopulateData('Layout',data)
   elseif CalledCommand == "GetScripts" then PopulateData('Script',data)
-  elseif CalledCommand == "loadLayout" then EditLayouts.String = ""
   elseif CalledCommand == "WallSources" then PopulateLoadedSources(data)
   elseif CalledCommand == "GetLayoutInfo" then PopulateLayoutInfo(data)
   elseif CalledCommand == "GetSources" then PopulateData('Source',data)
+  elseif CalledCommand == "loadLayout" then
+    EditLayouts.String = ""
+    --Controls[pageDefs['Layout'].triggerAll].Boolean = false
+    StopTimer("Layout")
+  elseif CalledCommand == "loadScript" then StopTimer('Script')--Controls[pageDefs['Script'].triggerAll].Boolean = false
+  elseif CalledCommand == "AddSource" then StopTimer('Source')--Controls[pageDefs['Source'].triggerAll].Boolean = false
   end
-
+  
+  --_G['btn'..type..'_trigger'] = Controls[pageDefs[type].triggerAll]
 
   LastResponses[formatTime] = response
   LastResponses[formatTime].command = CalledCommand
@@ -919,14 +948,27 @@ end
 --********************************************************************************
 function EstablishConnection()
   printFunction("EstablishConnection")
-  if EditAPI.String ~= "" and EditWebAddr.String ~= "" then
+  if APIKey.String ~= "" and EditWebAddr.String ~= "" then
     GET("GetWalls")
   elseif EditWebAddr.String == "" or EditWebAddr.String == DEFAULT_WEBADDR then
     ParseCode(3)
-  elseif EditAPI.String == "" then
+  elseif APIKey.String == "" then
     ParseCode(4)
   end
 end
+
+
+--********************************************************************************
+--* Function: SetAPIKey()
+--* Description: store API key in a hidden component and replace with *s
+--* then test connection with Server
+--********************************************************************************
+function SetAPIKey()
+  APIKey.String = EditAPI.String
+  EditAPI.String = EditAPI.String:gsub(".", "*")
+  EstablishConnection()
+end
+
 
 
 --********************************************************************************
@@ -938,7 +980,7 @@ BtnClearVS.EventHandler = ClearViewscreen
 BtnGetWallsources.EventHandler = UpdateWallInfo
 EditLastCommands.EventHandler = ShowResponse
 EditWebAddr.EventHandler = EstablishConnection
-EditAPI.EventHandler = EstablishConnection
+EditAPI.EventHandler = SetAPIKey
 
 for key,object in ipairs(BtnVsSrcSelect) do
   object.EventHandler = function() HideSourceLists(key) end
@@ -953,13 +995,14 @@ for k,type in ipairs(SIMPLE_COMMANDS) do
   local types = type..'s'
   local _btnGet = _G['btnGet'..types]
   local _btnUCIEdit = _G['btn'..type..'UCIEdit']
-  local _editSelect = _G[type..'EditSelect']
+  --local _editSelect = _G[type..'EditSelect']
   local _btnEdit =_G['btn'..type..'Edit']
   local _editLegend = _G['edit'..type..'Legend']
   local _btnCall = _G['btn'..type..'Call']
   local _btnRemove = _G['btn'..type..'Remove']
   local _editDef = _G['edit'..type..'Def']
   local _editID = _G['edit'..type..'ID']
+  
   for key,object in ipairs (_btnUCIEdit) do
     object.EventHandler = function() EnableUCIEdit(type,key,object.Boolean) end
   end
@@ -977,7 +1020,7 @@ for k,type in ipairs(SIMPLE_COMMANDS) do
   end
   for key,object in ipairs(_editDef) do
     object.EventHandler = function() 
-      ComboSelect(key,_btnEdit)
+      EditSelect(type,key)
       GetPreview(type,key)
       for j,o in ipairs(_editID) do --hide ID buttons based on selection
         o.IsInvisible = j ~= key
@@ -985,6 +1028,7 @@ for k,type in ipairs(SIMPLE_COMMANDS) do
     end
   end
   _btnGet.EventHandler = function() GET("Get"..types) end
+  _G['timer'..type].EventHandler = TimerFunc
 end
 
 
@@ -993,7 +1037,7 @@ end
 --* Description: Initialization code for the plugin
 --********************************************************************************
 function Initialize()
-  ParseCode(2)
+  ParseCode(1)
   HideSourceLists(1)
   PopulateDefaults()    
   for k,type in ipairs(SIMPLE_COMMANDS) do
@@ -1001,8 +1045,8 @@ function Initialize()
     local legend = _G['edit'..type..'Legend']
     local uciEdit = _G['btn'..type..'UCIEdit']
     for key,object in ipairs(call) do
-      if uciEdit[key].Boolean then
-        legend[key].IsDisabled = true  
+      if uciEdit[key].Boolean or type == "Source" then
+        legend[key].IsDisabled = true
       else
         object.Legend = legend[key].String
       end
